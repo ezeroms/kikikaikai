@@ -1,0 +1,35 @@
+enum ContentType {
+  bulletin,
+  manuscript,
+  video,
+  audio,
+  shop,
+  archive;
+
+  String get label => switch (this) {
+        ContentType.bulletin => '回覧板',
+        ContentType.manuscript => '玉置玉稿',
+        ContentType.video => '街頭テレビ',
+        ContentType.audio => '団地ラジオ',
+        ContentType.shop => '団地便',
+        ContentType.archive => '旧作倉庫',
+      };
+
+  String get iconAsset => switch (this) {
+        ContentType.bulletin => 'assets/branding/eye_catch/kairanban.png',
+        ContentType.manuscript => 'assets/branding/eye_catch/gyokko.png',
+        ContentType.video => 'assets/branding/eye_catch/gaitotv.png',
+        ContentType.audio => 'assets/branding/eye_catch/gaitoradio.png',
+        ContentType.shop => 'assets/branding/eye_catch/danchiletter.png',
+        ContentType.archive => 'assets/branding/eye_catch/kyusakusoko.png',
+      };
+
+  String get routePath => switch (this) {
+        ContentType.bulletin => '/kairanban',
+        ContentType.manuscript => '/gyokko',
+        ContentType.video => '/gaitotv',
+        ContentType.audio => '/gaitoradio',
+        ContentType.shop => '/danchiletter',
+        ContentType.archive => '/kyusakusoko',
+      };
+}
