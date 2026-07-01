@@ -51,7 +51,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '奇奇怪怪アカウントでログイン',
+              '品品団地アカウントでログイン',
               style: AppTypography.body(size: 14),
             ),
             const SizedBox(height: 24),

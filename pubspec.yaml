@@ -1,5 +1,5 @@
 name: kikikaikai
-description: "奇奇怪怪 - Podcast発カルチャープラットフォーム"
+description: "品品団地（pinpin-danchi）- カルチャープラットフォーム"
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -33,6 +33,10 @@ flutter:
   uses-material-design: true
   assets:
     - assets/branding/
+    - assets/branding/pinpin/
     - assets/branding/eye_catch/
     - assets/audio/
     - assets/video/
+    - assets/banner/
+    - assets/avatar/
+    - assets/tab/

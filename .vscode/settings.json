@@ -1,0 +1,16 @@
+{
+  "terminal.integrated.defaultProfile.osx": "zsh-login",
+  "terminal.integrated.profiles.osx": {
+    "zsh-login": {
+      "path": "/bin/zsh",
+      "args": ["-l"],
+      "icon": "terminal",
+      "overrideName": true
+    }
+  },
+  "terminal.integrated.inheritEnv": true,
+  "terminal.integrated.scrollback": 10000,
+  "dart.flutterSelectDeviceWhenConnected": false,
+  "dart.openDevTools": "never",
+  "dart.hotReloadOnSave": "manual"
+}

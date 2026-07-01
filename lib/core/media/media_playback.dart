@@ -14,7 +14,7 @@ class MediaPlayback {
       builder: () => KikikaikaiMediaHandler(),
       config: AudioServiceConfig(
         androidNotificationChannelId: 'tokyo.kikikaikai.media',
-        androidNotificationChannelName: '奇奇怪怪',
+        androidNotificationChannelName: '品品団地',
         androidNotificationChannelDescription: 'ラジオ・テレビの再生',
         androidNotificationOngoing: true,
         androidStopForegroundOnPause: true,

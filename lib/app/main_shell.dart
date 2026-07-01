@@ -18,15 +18,17 @@ class MainShell extends StatelessWidget {
       bottomNavigationBar: BottomNavigationBar(
         currentIndex: navigationShell.currentIndex,
         onTap: navigationShell.goBranch,
+        showSelectedLabels: false,
+        showUnselectedLabels: false,
         items: [
           BottomNavigationBarItem(
             icon: Icon(
-              LucideIcons.clapperboard,
+              LucideIcons.house,
               color: navigationShell.currentIndex == 0
                   ? AppColors.mangoTango
                   : AppColors.shuttleGray,
             ),
-            label: '鑑賞',
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(
@@ -35,7 +37,7 @@ class MainShell extends StatelessWidget {
                   ? AppColors.mangoTango
                   : AppColors.shuttleGray,
             ),
-            label: '検索',
+            label: '',
           ),
           BottomNavigationBarItem(
             icon: Icon(
@@ -44,7 +46,7 @@ class MainShell extends StatelessWidget {
                   ? AppColors.mangoTango
                   : AppColors.shuttleGray,
             ),
-            label: '保存済み',
+            label: '',
           ),
         ],
       ),

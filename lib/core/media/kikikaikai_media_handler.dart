@@ -129,7 +129,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
 
     if (content.type == ContentType.video) {
       await _playVideo(content.mediaUrl!);
-    } else if (content.type == ContentType.audio) {
+    } else if (content.type.isAudioPlayback) {
       await _playAudio(content.mediaUrl!);
     }
 
@@ -145,7 +145,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
     return MediaItem(
       id: content.id,
       title: content.title,
-      artist: '奇奇怪怪',
+      artist: '品品団地',
       album: content.type.label,
       duration: _kind == MediaKind.audio
           ? _audioPlayer.duration

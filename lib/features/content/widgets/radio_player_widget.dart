@@ -22,15 +22,16 @@ class RadioPlayerWidget extends ConsumerStatefulWidget {
 }
 
 class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
-  @override
-  void initState() {
-    super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      MediaPlayback.playContent(
-        widget.content,
-        previewLimit: widget.previewLimit,
-      );
-    });
+  bool _isCurrentContent() {
+    return MediaPlayback.handler?.currentContent?.id == widget.content.id;
+  }
+
+  Future<void> _startPlayback() async {
+    await MediaPlayback.playContent(
+      widget.content,
+      previewLimit: widget.previewLimit,
+    );
+    if (mounted) setState(() {});
   }
 
   String _formatDuration(Duration d) {
@@ -42,6 +43,7 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
   @override
   Widget build(BuildContext context) {
     final handler = MediaPlayback.handler;
+    final isActive = _isCurrentContent();
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 16),
@@ -71,12 +73,12 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      '団地ラジオ',
-                      style: AppTypography.label(color: AppColors.mangoTango),
+                      widget.content.type.label,
+                      style: AppTypography.overline(),
                     ),
                     Text(
                       widget.content.title,
-                      style: AppTypography.body(size: 14),
+                      style: AppTypography.titleSmall(size: 14),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
@@ -86,7 +88,23 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
             ],
           ),
           const SizedBox(height: 16),
-          if (handler != null)
+          if (!isActive)
+            Center(
+              child: FilledButton.icon(
+                onPressed: _startPlayback,
+                style: FilledButton.styleFrom(
+                  backgroundColor: AppColors.mangoTango,
+                  foregroundColor: AppColors.white,
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 28,
+                    vertical: 14,
+                  ),
+                ),
+                icon: const Icon(LucideIcons.play, size: 20),
+                label: const Text('再生する'),
+              ),
+            )
+          else if (handler != null)
             ValueListenableBuilder<bool>(
               valueListenable: handler.previewExpiredNotifier,
               builder: (context, previewExpired, _) {
@@ -133,11 +151,11 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                               children: [
                                 Text(
                                   _formatDuration(position),
-                                  style: AppTypography.label(size: 11),
+                                  style: AppTypography.caption(size: 11),
                                 ),
                                 Text(
                                   _formatDuration(total),
-                                  style: AppTypography.label(size: 11),
+                                  style: AppTypography.caption(size: 11),
                                 ),
                               ],
                             ),
@@ -191,14 +209,16 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                 );
               },
             ),
-          const SizedBox(height: 4),
-          Text(
-            'バックグラウンド再生に対応しています',
-            style: AppTypography.label(
-              size: 10,
-              color: AppColors.shuttleGray,
+          if (isActive) ...[
+            const SizedBox(height: 4),
+            Text(
+              'バックグラウンド再生に対応しています',
+              style: AppTypography.label(
+                size: 10,
+                color: AppColors.shuttleGray,
+              ),
             ),
-          ),
+          ],
         ],
       ),
     );

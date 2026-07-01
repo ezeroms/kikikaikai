@@ -15,6 +15,7 @@ class Content {
     this.bodyMarkdown,
     this.previewDuration = const Duration(seconds: 30),
     this.externalUrl,
+    this.cardSubtitle,
   });
 
   final String id;
@@ -29,6 +30,9 @@ class Content {
   final String? bodyMarkdown;
   final Duration previewDuration;
   final String? externalUrl;
+
+  /// カード上にタイトル下へ表示するサブテキスト（null ならタイトルのみ）
+  final String? cardSubtitle;
 
   String get displayThumbnail => thumbnailAsset ?? type.iconAsset;
 }

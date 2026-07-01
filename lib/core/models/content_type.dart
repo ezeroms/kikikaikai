@@ -3,6 +3,7 @@ enum ContentType {
   manuscript,
   video,
   audio,
+  kikikaikai,
   shop,
   archive;
 
@@ -11,15 +12,20 @@ enum ContentType {
         ContentType.manuscript => '玉置玉稿',
         ContentType.video => '街頭テレビ',
         ContentType.audio => '団地ラジオ',
+        ContentType.kikikaikai => '奇奇怪怪',
         ContentType.shop => '団地便',
         ContentType.archive => '旧作倉庫',
       };
+
+  bool get isAudioPlayback =>
+      this == ContentType.audio || this == ContentType.kikikaikai;
 
   String get iconAsset => switch (this) {
         ContentType.bulletin => 'assets/branding/eye_catch/kairanban.png',
         ContentType.manuscript => 'assets/branding/eye_catch/gyokko.png',
         ContentType.video => 'assets/branding/eye_catch/gaitotv.png',
         ContentType.audio => 'assets/branding/eye_catch/gaitoradio.png',
+        ContentType.kikikaikai => 'assets/branding/ogp_common.png',
         ContentType.shop => 'assets/branding/eye_catch/danchiletter.png',
         ContentType.archive => 'assets/branding/eye_catch/kyusakusoko.png',
       };
@@ -29,6 +35,7 @@ enum ContentType {
         ContentType.manuscript => '/gyokko',
         ContentType.video => '/gaitotv',
         ContentType.audio => '/gaitoradio',
+        ContentType.kikikaikai => '/kikikaikai',
         ContentType.shop => '/danchiletter',
         ContentType.archive => '/kyusakusoko',
       };

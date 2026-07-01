@@ -1,0 +1,35 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "Flutter: Run (Simulator)",
+      "type": "shell",
+      "command": "${workspaceFolder}/scripts/flutter-dev.sh",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": {}
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "flutter",
+        "pattern": { "regexp": "^$" },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "^Launching lib",
+          "endsPattern": "Flutter run key commands\\.|A Dart VM Service on"
+        }
+      },
+      "presentation": {
+        "reveal": "always",
+        "panel": "dedicated",
+        "group": "flutter",
+        "focus": true,
+        "clear": true,
+        "showReuseMessage": false
+      },
+      "runOptions": {
+        "instanceLimit": 1
+      }
+    }
+  ]
+}

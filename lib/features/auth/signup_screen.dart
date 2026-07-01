@@ -54,7 +54,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              '奇奇怪怪アカウントを作成',
+              '品品団地アカウントを作成',
               style: AppTypography.body(size: 14),
             ),
             const SizedBox(height: 24),

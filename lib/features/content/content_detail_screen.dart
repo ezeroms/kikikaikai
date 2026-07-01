@@ -12,6 +12,7 @@ import 'package:kikikaikai/core/providers/providers.dart';
 import 'package:kikikaikai/features/content/widgets/radio_player_widget.dart';
 import 'package:kikikaikai/features/content/widgets/tv_player_widget.dart';
 import 'package:kikikaikai/shared/widgets/access_lock_overlay.dart';
+import 'package:kikikaikai/shared/widgets/author_meta_row.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContentDetailScreen extends ConsumerWidget {
@@ -24,8 +25,7 @@ class ContentDetailScreen extends ConsumerWidget {
 
   bool _isPreviewOnly(Content content, UserTier tier) {
     if (_canAccess(content, tier)) return false;
-    return content.type == ContentType.video ||
-        content.type == ContentType.audio;
+    return content.type == ContentType.video || content.type.isAudioPlayback;
   }
 
   Future<void> _openExternal(String url) async {
@@ -87,36 +87,25 @@ class ContentDetailScreen extends ConsumerWidget {
                         const SizedBox(width: 8),
                         Text(
                           content.type.label,
-                          style: AppTypography.label(
-                            color: AppColors.mangoTango,
-                          ),
+                          style: AppTypography.overline(),
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Text(
                       content.title,
-                      style: AppTypography.heading(size: 22),
+                      style: AppTypography.title(size: 22),
                     ),
                     const SizedBox(height: 8),
-                    Text(
-                      DateFormat('yyyy年M月d日').format(content.publishedAt),
-                      style: AppTypography.label(size: 12),
-                    ),
                     authorAsync.when(
                       loading: () => const SizedBox.shrink(),
                       error: (_, _) => const SizedBox.shrink(),
                       data: (author) {
-                        if (author == null) return const SizedBox.shrink();
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: Text(
-                            '執筆: ${author.name}',
-                            style: AppTypography.body(
-                              size: 14,
-                              color: AppColors.summerWood,
-                            ),
-                          ),
+                        return AuthorMetaRow(
+                          author: author,
+                          dateLabel: DateFormat('yyyy年M月d日')
+                              .format(content.publishedAt),
+                          avatarRadius: 14,
                         );
                       },
                     ),
@@ -129,7 +118,7 @@ class ContentDetailScreen extends ConsumerWidget {
                             ? const Duration(seconds: 30)
                             : null,
                       ),
-                    if (showPlayer && content.type == ContentType.audio)
+                    if (showPlayer && content.type.isAudioPlayback)
                       RadioPlayerWidget(
                         key: ValueKey(content.id),
                         content: content,

@@ -38,7 +38,7 @@ class PaperTapeHeading extends StatelessWidget {
               Expanded(
                 child: Text(
                   title,
-                  style: AppTypography.body(
+                  style: AppTypography.titleSmall(
                     size: 15,
                     color: AppColors.black,
                   ),
@@ -47,9 +47,9 @@ class PaperTapeHeading extends StatelessWidget {
               if (date != null)
                 Text(
                   date!,
-                  style: AppTypography.label(
+                  style: AppTypography.caption(
                     size: 12,
-                    color: AppColors.black.withValues(alpha: 0.7),
+                    color: AppColors.black.withValues(alpha: 0.65),
                   ),
                 ),
             ],

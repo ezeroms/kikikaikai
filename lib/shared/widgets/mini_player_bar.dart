@@ -75,16 +75,13 @@ class MiniPlayerBar extends StatelessWidget {
                                   children: [
                                     Text(
                                       content.type.label,
-                                      style: AppTypography.label(
-                                        size: 10,
-                                        color: AppColors.mangoTango,
-                                      ),
+                                      style: AppTypography.overline(),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
                                     Text(
                                       content.title,
-                                      style: AppTypography.body(size: 13),
+                                      style: AppTypography.titleSmall(size: 13),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),

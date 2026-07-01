@@ -75,6 +75,11 @@ final routerProvider = Provider<GoRouter>((ref) {
             const ContentListScreen(type: ContentType.audio),
       ),
       GoRoute(
+        path: '/kikikaikai',
+        builder: (context, state) =>
+            const ContentListScreen(type: ContentType.kikikaikai),
+      ),
+      GoRoute(
         path: '/danchiletter',
         builder: (context, state) =>
             const ContentListScreen(type: ContentType.shop),

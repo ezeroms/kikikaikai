@@ -7,7 +7,7 @@ enum UserTier {
 
   String get label => switch (this) {
         UserTier.guest => '見学者',
-        UserTier.member => '奇奇怪怪アカウント',
+        UserTier.member => '品品団地アカウント',
         UserTier.resident => '団地住民',
       };
 

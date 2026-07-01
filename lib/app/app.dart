@@ -11,7 +11,7 @@ class KikikaikaiApp extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final router = ref.watch(routerProvider);
     return MaterialApp.router(
-      title: '奇奇怪怪',
+      title: '品品団地',
       theme: AppTheme.dark,
       routerConfig: router,
       debugShowCheckedModeBanner: false,

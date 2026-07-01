@@ -1,0 +1,12 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "品品団地 (iOS Simulator)",
+      "request": "launch",
+      "type": "dart",
+      "program": "lib/main.dart",
+      "deviceId": "A596A395-A5BA-4AAF-BEFB-C539B5F99B27"
+    }
+  ]
+}

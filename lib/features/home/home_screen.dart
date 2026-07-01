@@ -6,76 +6,78 @@ import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
+import 'package:kikikaikai/features/home/home_feed.dart';
+import 'package:kikikaikai/features/home/widgets/featured_carousel_section.dart';
+import 'package:kikikaikai/features/home/widgets/home_horizontal_section.dart';
+import 'package:kikikaikai/features/home/browse_tab.dart';
+import 'package:kikikaikai/features/home/widgets/browse_pill_tab_bar.dart';
 import 'package:kikikaikai/shared/widgets/content_card.dart';
 import 'package:kikikaikai/shared/widgets/mini_player_bar.dart';
 
-enum BrowseTab {
-  home,
-  bulletin,
-  radio,
-  tv,
-  manuscript;
-
-  String get label => switch (this) {
-        BrowseTab.home => 'ホーム',
-        BrowseTab.bulletin => '回覧板',
-        BrowseTab.radio => 'ラジオ',
-        BrowseTab.tv => 'テレビ',
-        BrowseTab.manuscript => '玉稿',
-      };
-
-  ContentType? get contentType => switch (this) {
-        BrowseTab.home => null,
-        BrowseTab.bulletin => ContentType.bulletin,
-        BrowseTab.radio => ContentType.audio,
-        BrowseTab.tv => ContentType.video,
-        BrowseTab.manuscript => ContentType.manuscript,
-      };
-}
-
-class HomeScreen extends ConsumerWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    return DefaultTabController(
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends ConsumerState<HomeScreen>
+    with SingleTickerProviderStateMixin {
+  late final TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(
       length: BrowseTab.values.length,
-      child: Scaffold(
-        backgroundColor: AppColors.black,
-        appBar: AppBar(
-          title: Text('鑑賞', style: AppTypography.heading(size: 18)),
-          actions: [
-            IconButton(
-              onPressed: () => context.push('/mypage'),
-              icon: const Icon(
-                LucideIcons.user,
-                color: AppColors.summerWood,
-              ),
-              tooltip: '自室',
+      vsync: this,
+    );
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: AppColors.black,
+      appBar: AppBar(
+        toolbarHeight: 96,
+        title: Image.asset(
+          'assets/branding/pinpin/logo.png',
+          height: 80,
+          fit: BoxFit.contain,
+        ),
+        actions: [
+          IconButton(
+            onPressed: () => context.push('/mypage'),
+            icon: const Icon(
+              LucideIcons.user,
+              color: AppColors.summerWood,
             ),
-          ],
-          bottom: TabBar(
-            isScrollable: true,
-            tabAlignment: TabAlignment.start,
-            indicatorColor: AppColors.mangoTango,
-            labelColor: AppColors.white,
-            unselectedLabelColor: AppColors.shuttleGray,
-            labelStyle: AppTypography.label(size: 14),
-            unselectedLabelStyle: AppTypography.label(size: 14),
-            dividerColor: AppColors.riverRoad.withValues(alpha: 0.3),
-            tabs: BrowseTab.values
-                .map((tab) => Tab(text: tab.label))
-                .toList(),
+            tooltip: '自室',
           ),
-        ),
-        body: TabBarView(
-          children: BrowseTab.values.map((tab) {
-            if (tab == BrowseTab.home) {
-              return const _BrowseHomeTab();
-            }
-            return _BrowseCategoryTab(type: tab.contentType!);
-          }).toList(),
-        ),
+        ],
+      ),
+      body: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          BrowsePillTabBar(controller: _tabController),
+          Expanded(
+            child: TabBarView(
+              controller: _tabController,
+              children: BrowseTab.values.map((tab) {
+                if (tab == BrowseTab.home) {
+                  return const _BrowseHomeTab();
+                }
+                return _BrowseCategoryTab(type: tab.contentType!);
+              }).toList(),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -83,13 +85,6 @@ class HomeScreen extends ConsumerWidget {
 
 class _BrowseHomeTab extends ConsumerWidget {
   const _BrowseHomeTab();
-
-  static const _featuredTypes = {
-    ContentType.bulletin,
-    ContentType.audio,
-    ContentType.video,
-    ContentType.manuscript,
-  };
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -99,45 +94,34 @@ class _BrowseHomeTab extends ConsumerWidget {
       loading: () => const Center(child: CircularProgressIndicator()),
       error: (e, _) => Center(child: Text('読み込みエラー: $e')),
       data: (all) {
-        final featured = all
-            .where((c) => _featuredTypes.contains(c.type))
-            .toList()
-          ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
-
-        final trending = featured.take(5).toList();
-        final latest = featured;
+        final recommended = HomeFeed.recommended(all);
 
         return ListView(
           padding: EdgeInsets.fromLTRB(
-            16,
-            16,
-            16,
+            0,
+            8,
+            0,
             32 + miniPlayerScrollPadding(context),
           ),
           children: [
-            Text('トレンド', style: AppTypography.heading(size: 18)),
-            const SizedBox(height: 12),
-            SizedBox(
-              height: 300,
-              child: ListView.separated(
-                scrollDirection: Axis.horizontal,
-                itemCount: trending.length,
-                separatorBuilder: (_, _) => const SizedBox(width: 16),
-                itemBuilder: (context, index) {
-                  return ContentCard(
-                    content: trending[index],
-                    width: 280,
-                  );
-                },
-              ),
-            ),
-            const SizedBox(height: 32),
-            Text('新着', style: AppTypography.heading(size: 18)),
-            const SizedBox(height: 12),
-            ...latest.map(
-              (content) => Padding(
-                padding: const EdgeInsets.only(bottom: 24),
-                child: ContentCard(content: content),
+            FeaturedCarouselSection(contents: recommended),
+            const SizedBox(height: 28),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                children: [
+                  ...HomeFeed.sections.expand((section) {
+                    final items = section.items(all);
+                    if (items.isEmpty) return <Widget>[];
+                    return [
+                      HomeHorizontalSection(
+                        title: section.title,
+                        contents: items,
+                      ),
+                      const SizedBox(height: 32),
+                    ];
+                  }),
+                ],
               ),
             ),
           ],
@@ -175,7 +159,7 @@ class _BrowseCategoryTab extends ConsumerWidget {
         return ListView.separated(
           padding: EdgeInsets.fromLTRB(
             16,
-            16,
+            8,
             16,
             32 + miniPlayerScrollPadding(context),
           ),

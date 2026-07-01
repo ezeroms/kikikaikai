@@ -8,6 +8,6 @@ void main() {
       const ProviderScope(child: KikikaikaiApp()),
     );
     await tester.pumpAndSettle();
-    expect(find.text('奇奇怪怪'), findsOneWidget);
+    expect(find.text('品品団地'), findsOneWidget);
   });
 }

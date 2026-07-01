@@ -23,7 +23,7 @@ class AccessLockOverlay extends StatelessWidget {
 
     final needsSignup = userTier == UserTier.guest;
     final message = needsSignup
-        ? '奇奇怪怪アカウントが必要です'
+        ? '品品団地アカウントが必要です'
         : '団地住民限定コンテンツです';
     final buttonLabel = needsSignup ? '入居登録する' : '団地住民になる';
     final route = needsSignup ? '/signup' : '/upgrade';
@@ -40,12 +40,12 @@ class AccessLockOverlay extends StatelessWidget {
               const SizedBox(height: 16),
               Text(
                 accessLevel.label,
-                style: AppTypography.label(color: AppColors.mangoTango),
+                style: AppTypography.overline(),
               ),
               const SizedBox(height: 8),
               Text(
                 message,
-                style: AppTypography.heading(size: 18),
+                style: AppTypography.title(size: 18),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 24),

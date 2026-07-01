@@ -2,12 +2,12 @@ import 'package:kikikaikai/core/models/access_level.dart';
 import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
 
-const _kairanban = 'assets/branding/eye_catch/kairanban.png';
-const _gaitoradio = 'assets/branding/eye_catch/gaitoradio.png';
-const _gaitotv = 'assets/branding/eye_catch/gaitotv.png';
-const _gyokko = 'assets/branding/eye_catch/gyokko.png';
+String _banner(int n) => 'assets/banner/sample-banner_$n.png';
+
+const _kikikaikaiBanner = 'assets/banner/sample-banner_1.png';
+const _bulletinBanner = 'assets/banner/sample-banner_2.png';
+const _manuscriptBanner = 'assets/banner/sample-banner_3.png';
 const _ogp = 'assets/branding/ogp_common.png';
-const _bgHome = 'assets/branding/bg_home_mobile.png';
 
 final dummyContents = <Content>[
   Content(
@@ -16,9 +16,10 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.public,
     title: 'PINPIN MART 復活',
     description: '闇市の品品団地、小売部門が復活した。',
-    authorId: 'author_kanri',
+    cardSubtitle: '闇市の品品団地、小売部門が復活した。',
+    authorId: 'author_taitan',
     publishedAt: DateTime(2026, 6, 28),
-    thumbnailAsset: _ogp,
+    thumbnailAsset: _bulletinBanner,
     bodyMarkdown: '''
 # PINPIN MART 復活
 
@@ -35,9 +36,9 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.member,
     title: '企画の設計図：第3回',
     description: '空想段階の企画の裏側を公開する。',
-    authorId: 'author_kanri',
+    authorId: 'author_taitan',
     publishedAt: DateTime(2026, 6, 25),
-    thumbnailAsset: _kairanban,
+    thumbnailAsset: _bulletinBanner,
     bodyMarkdown: '''
 # 企画の設計図：第3回
 
@@ -54,9 +55,9 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.resident,
     title: '管理室の記録',
     description: '団地住民限定の内部記録。',
-    authorId: 'author_kanri',
+    authorId: 'author_taitan',
     publishedAt: DateTime(2026, 6, 20),
-    thumbnailAsset: _bgHome,
+    thumbnailAsset: _bulletinBanner,
     bodyMarkdown: '''
 # 管理室の記録
 
@@ -71,9 +72,10 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.member,
     title: 'ポップカルチャーと団地（前編）',
     description: 'タイタンがゲストを呼んで、今のポップカルチャーについて考える。前半。',
-    authorId: 'author_taitan',
+    cardSubtitle: 'ゲストと語る、ポップカルチャーと団地の話。',
+    authorId: 'author_paon',
     publishedAt: DateTime(2026, 6, 22),
-    thumbnailAsset: _gaitoradio,
+    thumbnailAsset: _banner(4),
     mediaUrl: 'assets/audio/radio_01.mp3',
   ),
   Content(
@@ -82,9 +84,9 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.resident,
     title: 'ポップカルチャーと団地（後編）',
     description: '団地住民限定。同じ回の後半パート。',
-    authorId: 'author_taitan',
+    authorId: 'author_paon',
     publishedAt: DateTime(2026, 6, 22),
-    thumbnailAsset: _gaitoradio,
+    thumbnailAsset: _banner(5),
     mediaUrl: 'assets/audio/radio_02.mp3',
   ),
   Content(
@@ -93,9 +95,10 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.member,
     title: '街頭インタビュー #7（前半）',
     description: '街頭テレビ、路上からの配信。前半は無料会員まで。',
-    authorId: 'author_guest',
+    cardSubtitle: '街頭テレビ、路上からの配信。',
+    authorId: 'author_paon',
     publishedAt: DateTime(2026, 6, 18),
-    thumbnailAsset: _gaitotv,
+    thumbnailAsset: _banner(12),
     mediaUrl: 'assets/video/tv_01.mp4',
   ),
   Content(
@@ -104,9 +107,9 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.resident,
     title: '街頭インタビュー #7（後半）',
     description: '団地住民限定。同じ回の後半パート。',
-    authorId: 'author_guest',
+    authorId: 'author_paon',
     publishedAt: DateTime(2026, 6, 18),
-    thumbnailAsset: _gaitotv,
+    thumbnailAsset: _banner(13),
     mediaUrl: 'assets/video/tv_02.mp4',
   ),
   Content(
@@ -115,9 +118,10 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.member,
     title: '都市伝説の系譜学',
     description: '玉置玉稿、エッセイ連載。',
+    cardSubtitle: '団地の階段と都市伝説をめぐるエッセイ。',
     authorId: 'author_tamaki',
     publishedAt: DateTime(2026, 6, 12),
-    thumbnailAsset: _gyokko,
+    thumbnailAsset: _manuscriptBanner,
     bodyMarkdown: '''
 # 都市伝説の系譜学
 
@@ -134,7 +138,7 @@ final dummyContents = <Content>[
     description: '団地住民限定の玉稿。',
     authorId: 'author_tamaki',
     publishedAt: DateTime(2026, 6, 8),
-    thumbnailAsset: _gyokko,
+    thumbnailAsset: _manuscriptBanner,
     bodyMarkdown: '''
 # 玉稿：夜の便所詩
 
@@ -152,6 +156,7 @@ final dummyContents = <Content>[
     description: '団地限定の珍品。気まぐれで予告する予定。',
     authorId: 'author_kanri',
     publishedAt: DateTime(2026, 5, 20),
+    thumbnailAsset: _ogp,
     bodyMarkdown: '''
 # 『二十』KV Tee
 
@@ -169,6 +174,7 @@ final dummyContents = <Content>[
     description: '団地の座布団。ざぶ。',
     authorId: 'author_kanri',
     publishedAt: DateTime(2026, 5, 15),
+    thumbnailAsset: _ogp,
     bodyMarkdown: '''
 # 団地ざぶ
 
@@ -182,8 +188,9 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.member,
     title: '2024 アーカイブ',
     description: '旧作倉庫、過去のコンテンツ。',
-    authorId: 'author_taitan',
+    authorId: 'author_kanri',
     publishedAt: DateTime(2025, 12, 31),
+    thumbnailAsset: _ogp,
     bodyMarkdown: '''
 # 2024 アーカイブ
 
@@ -202,6 +209,7 @@ final dummyContents = <Content>[
     description: '団地住民限定アーカイブ。',
     authorId: 'author_kanri',
     publishedAt: DateTime(2024, 1, 1),
+    thumbnailAsset: _ogp,
     bodyMarkdown: '''
 # 地下記録 2023
 
@@ -214,9 +222,10 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.public,
     title: '【回覧板】エレベーター点検のお知らせ',
     description: '来週火曜日、エレベーター点検を実施します。',
-    authorId: 'author_kanri',
+    cardSubtitle: '来週火曜日、エレベーター点検のお知らせ。',
+    authorId: 'author_taitan',
     publishedAt: DateTime(2026, 6, 30),
-    thumbnailAsset: _kairanban,
+    thumbnailAsset: _bulletinBanner,
     bodyMarkdown: '''
 # エレベーター点検のお知らせ
 
@@ -231,10 +240,169 @@ final dummyContents = <Content>[
     accessLevel: AccessLevel.public,
     title: '団地ラジオ 試聴版',
     description: '冒頭30秒のお試し視聴。',
-    authorId: 'author_taitan',
+    authorId: 'author_paon',
     publishedAt: DateTime(2026, 6, 29),
-    thumbnailAsset: _gaitoradio,
+    thumbnailAsset: _banner(6),
     mediaUrl: 'assets/audio/radio_01.mp3',
     bodyMarkdown: '会員登録すると全文視聴できます。',
+  ),
+  Content(
+    id: 'c016',
+    type: ContentType.kikikaikai,
+    accessLevel: AccessLevel.public,
+    title: '奇奇怪怪 #42（前編）',
+    description: 'ポッドキャスト「奇奇怪怪」。ポップカルチャーを語る前半。',
+    cardSubtitle: 'ポッドキャスト「奇奇怪怪」最新回。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 27),
+    thumbnailAsset: _kikikaikaiBanner,
+    mediaUrl: 'assets/audio/radio_01.mp3',
+  ),
+  Content(
+    id: 'c017',
+    type: ContentType.kikikaikai,
+    accessLevel: AccessLevel.public,
+    title: '奇奇怪怪 #42（後編）',
+    description: 'ポッドキャスト「奇奇怪怪」。ポップカルチャーを語る後半。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 27),
+    thumbnailAsset: _kikikaikaiBanner,
+    mediaUrl: 'assets/audio/radio_02.mp3',
+  ),
+  Content(
+    id: 'c018',
+    type: ContentType.kikikaikai,
+    accessLevel: AccessLevel.public,
+    title: '奇奇怪怪 試聴版',
+    description: '冒頭30秒のお試し視聴。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 26),
+    thumbnailAsset: _kikikaikaiBanner,
+    mediaUrl: 'assets/audio/radio_02.mp3',
+    bodyMarkdown: '会員登録すると全文視聴できます。',
+  ),
+  // ラジオ追加サンプル（banner 7–11）
+  Content(
+    id: 'c019',
+    type: ContentType.audio,
+    accessLevel: AccessLevel.member,
+    title: '団地ラジオ #12',
+    description: 'エレベーター点検の裏側を語る。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 17),
+    thumbnailAsset: _banner(7),
+    mediaUrl: 'assets/audio/radio_01.mp3',
+  ),
+  Content(
+    id: 'c020',
+    type: ContentType.audio,
+    accessLevel: AccessLevel.member,
+    title: '団地ラジオ #11',
+    description: '闇市の夜、団地ラジオ。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 16),
+    thumbnailAsset: _banner(8),
+    mediaUrl: 'assets/audio/radio_02.mp3',
+  ),
+  Content(
+    id: 'c021',
+    type: ContentType.audio,
+    accessLevel: AccessLevel.member,
+    title: '団地ラジオ #10',
+    description: 'ゲストとポップカルチャー雑談。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 15),
+    thumbnailAsset: _banner(9),
+    mediaUrl: 'assets/audio/radio_01.mp3',
+  ),
+  Content(
+    id: 'c022',
+    type: ContentType.audio,
+    accessLevel: AccessLevel.resident,
+    title: '団地ラジオ #9',
+    description: '団地住民限定の深夜枠。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 14),
+    thumbnailAsset: _banner(10),
+    mediaUrl: 'assets/audio/radio_02.mp3',
+  ),
+  Content(
+    id: 'c023',
+    type: ContentType.audio,
+    accessLevel: AccessLevel.resident,
+    title: '団地ラジオ #8',
+    description: '管理室からの臨時放送。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 13),
+    thumbnailAsset: _banner(11),
+    mediaUrl: 'assets/audio/radio_01.mp3',
+  ),
+  // テレビ追加サンプル（banner 14–19）
+  Content(
+    id: 'c024',
+    type: ContentType.video,
+    accessLevel: AccessLevel.member,
+    title: '街頭テレビ #6',
+    description: '路上インタビュー、渋谷編。',
+    cardSubtitle: '街頭テレビ、渋谷の路上から。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 11),
+    thumbnailAsset: _banner(14),
+    mediaUrl: 'assets/video/tv_01.mp4',
+  ),
+  Content(
+    id: 'c025',
+    type: ContentType.video,
+    accessLevel: AccessLevel.member,
+    title: '街頭テレビ #5',
+    description: '路上インタビュー、新宿編。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 10),
+    thumbnailAsset: _banner(15),
+    mediaUrl: 'assets/video/tv_02.mp4',
+  ),
+  Content(
+    id: 'c026',
+    type: ContentType.video,
+    accessLevel: AccessLevel.member,
+    title: '街頭テレビ #4',
+    description: '路上インタビュー、池袋編。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 9),
+    thumbnailAsset: _banner(16),
+    mediaUrl: 'assets/video/tv_01.mp4',
+  ),
+  Content(
+    id: 'c027',
+    type: ContentType.video,
+    accessLevel: AccessLevel.resident,
+    title: '街頭テレビ #3',
+    description: '団地住民限定の未公開カット。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 7),
+    thumbnailAsset: _banner(17),
+    mediaUrl: 'assets/video/tv_02.mp4',
+  ),
+  Content(
+    id: 'c028',
+    type: ContentType.video,
+    accessLevel: AccessLevel.resident,
+    title: '街頭テレビ #2',
+    description: '団地住民限定の未公開カット。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 6),
+    thumbnailAsset: _banner(18),
+    mediaUrl: 'assets/video/tv_01.mp4',
+  ),
+  Content(
+    id: 'c029',
+    type: ContentType.video,
+    accessLevel: AccessLevel.resident,
+    title: '街頭テレビ #1',
+    description: '団地住民限定の未公開カット。',
+    authorId: 'author_paon',
+    publishedAt: DateTime(2026, 6, 5),
+    thumbnailAsset: _banner(19),
+    mediaUrl: 'assets/video/tv_02.mp4',
   ),
 ];

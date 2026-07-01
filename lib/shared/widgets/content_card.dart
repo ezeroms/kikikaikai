@@ -5,6 +5,8 @@ import 'package:go_router/go_router.dart';
 import 'package:intl/intl.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
+import 'package:kikikaikai/shared/widgets/author_meta_row.dart';
+import 'package:kikikaikai/shared/widgets/content_card_text_block.dart';
 import 'package:kikikaikai/core/models/access_level.dart';
 import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
@@ -75,11 +77,9 @@ class ContentCard extends ConsumerWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Expanded(
-                          child: Text(
-                            content.title,
-                            style: AppTypography.body(size: 15),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
+                          child: ContentCardTextBlock(
+                            title: content.title,
+                            subtitle: content.cardSubtitle,
                           ),
                         ),
                         IconButton(
@@ -110,35 +110,9 @@ class ContentCard extends ConsumerWidget {
                       loading: () => const SizedBox(height: 24),
                       error: (_, _) => const SizedBox.shrink(),
                       data: (author) {
-                        return Row(
-                          children: [
-                            CircleAvatar(
-                              radius: 12,
-                              backgroundColor: AppColors.darkSurface,
-                              backgroundImage: author != null
-                                  ? AssetImage(author.avatarAsset)
-                                  : null,
-                              child: author == null
-                                  ? const Icon(LucideIcons.user, size: 14)
-                                  : null,
-                            ),
-                            const SizedBox(width: 8),
-                            Expanded(
-                              child: Text(
-                                author?.name ?? '不明',
-                                style: AppTypography.label(size: 12),
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                              ),
-                            ),
-                            Text(
-                              dateFormat.format(content.publishedAt),
-                              style: AppTypography.label(
-                                size: 11,
-                                color: AppColors.shuttleGray,
-                              ),
-                            ),
-                          ],
+                        return AuthorMetaRow(
+                          author: author,
+                          dateLabel: dateFormat.format(content.publishedAt),
                         );
                       },
                     ),
@@ -155,10 +129,7 @@ class ContentCard extends ConsumerWidget {
                         ),
                         child: Text(
                           content.accessLevel.label,
-                          style: AppTypography.label(
-                            size: 10,
-                            color: AppColors.mangoTango,
-                          ),
+                          style: AppTypography.overline(),
                         ),
                       ),
                     ],
