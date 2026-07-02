@@ -5,7 +5,12 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 abstract class ContentCommentsRepository {
   Future<List<ContentComment>> load(String contentId);
-  Future<void> add(String contentId, String body);
+  Future<void> add(
+    String contentId,
+    String body, {
+    String authorName = '匿名',
+    String? authorAvatarAsset,
+  });
 }
 
 class MockContentCommentsRepository implements ContentCommentsRepository {
@@ -32,7 +37,12 @@ class MockContentCommentsRepository implements ContentCommentsRepository {
   }
 
   @override
-  Future<void> add(String contentId, String body) async {
+  Future<void> add(
+    String contentId,
+    String body, {
+    String authorName = '匿名',
+    String? authorAvatarAsset,
+  }) async {
     final trimmed = body.trim();
     if (trimmed.isEmpty) return;
 
@@ -47,6 +57,8 @@ class MockContentCommentsRepository implements ContentCommentsRepository {
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       body: trimmed,
       createdAt: DateTime.now(),
+      authorName: authorName,
+      authorAvatarAsset: authorAvatarAsset,
     );
     current.insert(0, next.toJson());
     decoded[contentId] = current;

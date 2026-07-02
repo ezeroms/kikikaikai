@@ -176,10 +176,10 @@ class _FullscreenVideoPageState extends State<FullscreenVideoPage> {
                                 IconButton(
                                   iconSize: 36,
                                   onPressed: () => handler?.seek(
-                                    position - const Duration(seconds: 15),
+                                    position - const Duration(seconds: 10),
                                   ),
                                   icon: const Icon(
-                                    LucideIcons.rotate_ccw,
+                                    Icons.replay_10_rounded,
                                     color: AppColors.secondary,
                                   ),
                                 ),
@@ -197,10 +197,10 @@ class _FullscreenVideoPageState extends State<FullscreenVideoPage> {
                                 IconButton(
                                   iconSize: 36,
                                   onPressed: () => handler?.seek(
-                                    position + const Duration(seconds: 15),
+                                    position + const Duration(seconds: 10),
                                   ),
                                   icon: const Icon(
-                                    LucideIcons.rotate_cw,
+                                    Icons.forward_10_rounded,
                                     color: AppColors.secondary,
                                   ),
                                 ),

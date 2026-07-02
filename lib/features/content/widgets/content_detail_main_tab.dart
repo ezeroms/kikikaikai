@@ -5,7 +5,9 @@ import 'package:kikikaikai/app/theme/app_typography.dart';
 import 'package:kikikaikai/core/format/format_content_date.dart';
 import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
+import 'package:kikikaikai/core/models/figure.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
+import 'package:kikikaikai/features/content/widgets/content_detail_nested_tab_scroll.dart';
 import 'package:kikikaikai/features/content/widgets/tv_player_widget.dart';
 import 'package:kikikaikai/shared/widgets/figure_meta_row.dart';
 import 'package:kikikaikai/shared/widgets/rich_markdown_body.dart';
@@ -45,85 +47,172 @@ class ContentDetailMainTab extends ConsumerWidget {
       );
     }
 
-    return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (!content.type.isAudioPlayback) ...[
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  content.displayThumbnail,
-                  fit: BoxFit.cover,
+    if (content.type.isTextArticle) {
+      return _TextArticleDetailMainTab(
+        content: content,
+        canAccess: canAccess,
+        figuresAsync: figuresAsync,
+        figureNameStyle: _figureNameStyle,
+      );
+    }
+
+    if (content.type == ContentType.kikikaikai) {
+      return _KikikaikaiDetailMainTab(
+        content: content,
+        canAccess: canAccess,
+      );
+    }
+
+    return Builder(
+      builder: (context) => buildContentDetailNestedScroll(
+        context,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            if (!content.type.isAudioPlayback) ...[
+              AspectRatio(
+                aspectRatio: 16 / 9,
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(8),
+                  child: Image.asset(
+                    content.displayThumbnail,
+                    fit: BoxFit.cover,
+                  ),
                 ),
               ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                Image.asset(
-                  content.type.iconAsset,
-                  width: 32,
-                  height: 32,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  content.type.label,
-                  style: AppTypography.overline(),
-                ),
-              ],
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Image.asset(
+                    content.type.iconAsset,
+                    width: 32,
+                    height: 32,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    content.type.label,
+                    style: AppTypography.overline(),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+            ],
+            figuresAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (figures) => FigureMetaRow(
+                figures: figures,
+                dateLabel: '',
+                showDate: false,
+                compact: true,
+                avatarRadius: 14,
+                metaFontSize: 14,
+                nameStyle: _figureNameStyle,
+              ),
             ),
             const SizedBox(height: 12),
-          ],
-          figuresAsync.when(
-            loading: () => const SizedBox.shrink(),
-            error: (_, _) => const SizedBox.shrink(),
-            data: (figures) => FigureMetaRow(
-              figures: figures,
-              dateLabel: '',
-              showDate: false,
-              compact: true,
-              avatarRadius: 14,
-              metaFontSize: 14,
-              nameStyle: _figureNameStyle,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            formatContentDate(content.publishedAt),
-            style: AppTypography.body(
-              size: 14,
-              color: AppColors.muted,
-              weight: FontWeight.w400,
-            ),
-          ),
-          if (content.cardSubtitle != null &&
-              content.cardSubtitle!.trim().isNotEmpty) ...[
-            const SizedBox(height: 16),
             Text(
-              content.cardSubtitle!,
+              formatContentDate(content.publishedAt),
               style: AppTypography.body(
-                size: 15,
+                size: 14,
                 color: AppColors.muted,
                 weight: FontWeight.w400,
               ),
             ),
+            if (content.bodyMarkdown != null && canAccess) ...[
+              const SizedBox(height: 24),
+              RichMarkdownBody(data: content.bodyMarkdown!),
+            ],
           ],
-          if (content.description.trim().isNotEmpty) ...[
-            const SizedBox(height: 16),
+        ),
+      ),
+    );
+  }
+}
+
+class _KikikaikaiDetailMainTab extends StatelessWidget {
+  const _KikikaikaiDetailMainTab({
+    required this.content,
+    required this.canAccess,
+  });
+
+  final Content content;
+  final bool canAccess;
+
+  @override
+  Widget build(BuildContext context) {
+    if (content.bodyMarkdown == null || !canAccess) {
+      return Builder(
+        builder: (context) => buildContentDetailNestedScrollSlivers(
+          context,
+          slivers: const [SliverToBoxAdapter(child: SizedBox.shrink())],
+        ),
+      );
+    }
+
+    return Builder(
+      builder: (context) => buildContentDetailNestedScroll(
+        context,
+        child: RichMarkdownBody(data: content.bodyMarkdown!),
+      ),
+    );
+  }
+}
+
+class _TextArticleDetailMainTab extends StatelessWidget {
+  const _TextArticleDetailMainTab({
+    required this.content,
+    required this.canAccess,
+    required this.figuresAsync,
+    required this.figureNameStyle,
+  });
+
+  final Content content;
+  final bool canAccess;
+  final AsyncValue<List<Figure>> figuresAsync;
+  final TextStyle figureNameStyle;
+
+  @override
+  Widget build(BuildContext context) {
+    return Builder(
+      builder: (context) => buildContentDetailNestedScroll(
+        context,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
             Text(
-              content.description,
-              style: AppTypography.body(size: 15),
+              content.title,
+              style: AppTypography.titleSmall(size: 20),
             ),
+            const SizedBox(height: 16),
+            figuresAsync.when(
+              loading: () => const SizedBox.shrink(),
+              error: (_, _) => const SizedBox.shrink(),
+              data: (figures) => FigureMetaRow(
+                figures: figures,
+                dateLabel: '',
+                showDate: false,
+                compact: true,
+                avatarRadius: 14,
+                metaFontSize: 14,
+                nameStyle: figureNameStyle,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              formatContentDate(content.publishedAt),
+              style: AppTypography.body(
+                size: 14,
+                color: AppColors.muted,
+                weight: FontWeight.w400,
+              ),
+            ),
+            if (content.bodyMarkdown != null && canAccess) ...[
+              const SizedBox(height: 24),
+              RichMarkdownBody(data: content.bodyMarkdown!),
+            ],
           ],
-          if (content.bodyMarkdown != null && canAccess) ...[
-            const SizedBox(height: 24),
-            RichMarkdownBody(data: content.bodyMarkdown!),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -148,65 +237,63 @@ class _VideoDetailMainTab extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final figuresAsync = ref.watch(contentFiguresProvider(content.id));
 
-    return SingleChildScrollView(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          if (showVideoPlayer)
-            TvPlayerWidget(
-              key: ValueKey(content.id),
-              content: content,
-              previewLimit: previewOnly ? const Duration(seconds: 30) : null,
-              edgeToEdge: true,
-            )
-          else
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Image.asset(
-                content.displayThumbnail,
-                fit: BoxFit.cover,
-                width: double.infinity,
-              ),
+    return Builder(
+      builder: (context) => buildContentDetailNestedScrollSlivers(
+        context,
+        slivers: [
+          SliverPadding(
+            padding: const EdgeInsets.only(
+              top: kContentDetailTabContentTopSpacing,
             ),
-          Padding(
+            sliver: SliverToBoxAdapter(
+              child: showVideoPlayer
+                  ? TvPlayerWidget(
+                      key: ValueKey(content.id),
+                      content: content,
+                      previewLimit:
+                          previewOnly ? const Duration(seconds: 30) : null,
+                      edgeToEdge: true,
+                    )
+                  : AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: Image.asset(
+                        content.displayThumbnail,
+                        fit: BoxFit.cover,
+                        width: double.infinity,
+                      ),
+                    ),
+            ),
+          ),
+          SliverPadding(
             padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Text(
-                  content.title,
-                  style: AppTypography.titleSmall(size: 20),
-                ),
-                const SizedBox(height: 16),
-                figuresAsync.when(
-                  loading: () => const SizedBox.shrink(),
-                  error: (_, _) => const SizedBox.shrink(),
-                  data: (figures) => FigureMetaRow(
-                    figures: figures,
-                    dateLabel: '',
-                    showDate: false,
-                    compact: true,
-                    avatarRadius: 14,
-                    metaFontSize: 14,
-                    nameStyle: figureNameStyle,
-                  ),
-                ),
-                if (content.description.trim().isNotEmpty) ...[
-                  const SizedBox(height: 16),
+            sliver: SliverToBoxAdapter(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   Text(
-                    content.description,
-                    style: AppTypography.body(
-                      size: 15,
-                      color: AppColors.muted,
-                      weight: FontWeight.w400,
+                    content.title,
+                    style: AppTypography.titleSmall(size: 20),
+                  ),
+                  const SizedBox(height: 16),
+                  figuresAsync.when(
+                    loading: () => const SizedBox.shrink(),
+                    error: (_, _) => const SizedBox.shrink(),
+                    data: (figures) => FigureMetaRow(
+                      figures: figures,
+                      dateLabel: '',
+                      showDate: false,
+                      compact: true,
+                      avatarRadius: 14,
+                      metaFontSize: 14,
+                      nameStyle: figureNameStyle,
                     ),
                   ),
+                  if (content.bodyMarkdown != null && canAccess) ...[
+                    const SizedBox(height: 24),
+                    RichMarkdownBody(data: content.bodyMarkdown!),
+                  ],
                 ],
-                if (content.bodyMarkdown != null && canAccess) ...[
-                  const SizedBox(height: 24),
-                  RichMarkdownBody(data: content.bodyMarkdown!),
-                ],
-              ],
+              ),
             ),
           ),
         ],

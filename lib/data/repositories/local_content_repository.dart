@@ -31,7 +31,8 @@ class LocalContentRepository implements ContentRepository {
       c.preview_duration_ms,
       c.media_duration_ms,
       c.external_url,
-      c.card_subtitle
+      c.card_subtitle,
+      c.transcript
     FROM contents c
   ''';
 
@@ -86,7 +87,8 @@ class LocalContentRepository implements ContentRepository {
         c.preview_duration_ms,
         c.media_duration_ms,
         c.external_url,
-        c.card_subtitle
+        c.card_subtitle,
+        c.transcript
       FROM contents c
       INNER JOIN content_figures cf ON cf.content_id = c.id
       WHERE cf.figure_id = ?

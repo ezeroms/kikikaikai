@@ -1,5 +1,6 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kikikaikai/core/models/content_comment.dart';
+import 'package:kikikaikai/core/providers/auth_providers.dart';
 import 'package:kikikaikai/core/providers/repository_providers.dart';
 
 class ContentCommentsNotifier
@@ -11,7 +12,13 @@ class ContentCommentsNotifier
 
   Future<void> addComment(String body) async {
     final contentId = arg;
-    await ref.read(contentCommentsRepositoryProvider).add(contentId, body);
+    final user = ref.read(authProvider).valueOrNull;
+    await ref.read(contentCommentsRepositoryProvider).add(
+          contentId,
+          body,
+          authorName: user?.displayName ?? '匿名',
+          authorAvatarAsset: user?.avatarAsset,
+        );
     state = AsyncData(await ref.read(contentCommentsRepositoryProvider).load(contentId));
   }
 }

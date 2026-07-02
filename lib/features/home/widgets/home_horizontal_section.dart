@@ -17,8 +17,8 @@ class HomeHorizontalSection extends StatefulWidget {
   /// 親の左右パディング（PageView 幅の計算に使用）
   final double horizontalInset;
 
-  static const cardWidth = 280.0;
-  static const listHeight = 328.0;
+  static const cardWidth = 248.0;
+  static const listHeight = 300.0;
   static const _pageGap = 16.0;
 
   @override
@@ -89,6 +89,7 @@ class _HomeHorizontalSectionState extends State<HomeHorizontalSection> {
                     content: widget.contents.first,
                     width: HomeHorizontalSection.cardWidth,
                     height: HomeHorizontalSection.listHeight,
+                    showPlayButton: false,
                   ),
                 )
               : PageView.builder(
@@ -108,6 +109,7 @@ class _HomeHorizontalSectionState extends State<HomeHorizontalSection> {
                           content: widget.contents[index],
                           width: HomeHorizontalSection.cardWidth,
                           height: HomeHorizontalSection.listHeight,
+                          showPlayButton: false,
                         ),
                       ),
                     );

@@ -19,7 +19,7 @@ class FeaturedContentCard extends ConsumerWidget {
   static const _radius = 20.0;
 
   /// カルーセル全体の高さ（カード固定）
-  static const carouselHeight = 420.0;
+  static const carouselHeight = 360.0;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -64,7 +64,7 @@ class FeaturedContentCard extends ConsumerWidget {
               ),
               Expanded(
                 child: Padding(
-                  padding: const EdgeInsets.fromLTRB(20, 16, 20, 16),
+                  padding: const EdgeInsets.fromLTRB(16, 12, 16, 14),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
@@ -72,7 +72,7 @@ class FeaturedContentCard extends ConsumerWidget {
                         title: content.title,
                         subtitle: content.description,
                         titleStyle: AppTypography.title(
-                          size: 22,
+                          size: 20,
                           weight: FontWeight.w600,
                         ),
                         subtitleStyle: AppTypography.body(

@@ -1,14 +1,15 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kikikaikai/app/content_navigation.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
 import 'package:kikikaikai/core/media/kikikaikai_media_handler.dart';
 import 'package:kikikaikai/core/media/media_playback.dart';
 import 'package:kikikaikai/core/models/content.dart';
+import 'package:kikikaikai/core/providers/detail_mini_player_provider.dart';
 import 'package:kikikaikai/features/content/widgets/fullscreen_video_page.dart';
-import 'package:kikikaikai/shared/widgets/circular_media_button.dart';
 import 'package:video_player/video_player.dart';
 
 class MiniPlayerBar extends StatelessWidget {
@@ -39,10 +40,6 @@ class MiniPlayerBar extends StatelessWidget {
     return (positionMs / duration.inMilliseconds).clamp(0.0, 1.0);
   }
 
-  bool _isOnSameContentDetail(String contentId) {
-    return ContentNavigation.isDetailPath(currentPath, contentId);
-  }
-
   void _openDetail(String contentId) {
     ContentNavigation.openDetailWithPath(router, currentPath, contentId);
   }
@@ -62,9 +59,6 @@ class MiniPlayerBar extends StatelessWidget {
               valueListenable: handler.currentContentNotifier,
               builder: (context, content, _) {
                 if (!active || content == null || fullscreen) {
-                  return const SizedBox.shrink();
-                }
-                if (_isOnSameContentDetail(content.id)) {
                   return const SizedBox.shrink();
                 }
 
@@ -107,57 +101,46 @@ class MiniPlayerBar extends StatelessWidget {
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
-                                  child: SizedBox(
-                                    height: _thumbHeight,
-                                    child: ClipRect(
-                                      child: Material(
-                                        color: Colors.transparent,
-                                        child: InkWell(
-                                          onTap: () => _openDetail(content.id),
-                                          borderRadius: BorderRadius.circular(6),
-                                          child: Align(
-                                            alignment: Alignment.centerLeft,
-                                            child: FittedBox(
-                                              fit: BoxFit.scaleDown,
-                                              alignment: Alignment.centerLeft,
-                                              child: Column(
-                                                mainAxisAlignment:
-                                                    MainAxisAlignment.center,
-                                                mainAxisSize: MainAxisSize.min,
-                                                crossAxisAlignment:
-                                                    CrossAxisAlignment.start,
-                                                children: [
-                                                  Text(
-                                                    content.title,
-                                                    style: AppTypography
-                                                        .titleSmall(size: 13)
-                                                        .copyWith(height: 1.1),
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                  const SizedBox(height: 2),
-                                                  Text(
-                                                    content.type.label,
-                                                    style: AppTypography.body(
-                                                      size: 11,
-                                                      color: AppColors.muted,
-                                                      weight: FontWeight.w400,
-                                                    ).copyWith(height: 1.1),
-                                                    maxLines: 1,
-                                                    overflow:
-                                                        TextOverflow.ellipsis,
-                                                  ),
-                                                ],
-                                              ),
+                                  child: Material(
+                                    color: Colors.transparent,
+                                    child: InkWell(
+                                      onTap: () => _openDetail(content.id),
+                                      borderRadius: BorderRadius.circular(6),
+                                      child: SizedBox(
+                                        height: _thumbHeight,
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              content.title,
+                                              style: AppTypography.titleSmall(
+                                                size: 13,
+                                              ).copyWith(height: 1.1),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
                                             ),
-                                          ),
+                                            const SizedBox(height: 8),
+                                            Text(
+                                              content.type.label,
+                                              style: AppTypography.body(
+                                                size: 11,
+                                                color: AppColors.muted,
+                                                weight: FontWeight.w400,
+                                              ).copyWith(height: 1.1),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ],
                                         ),
                                       ),
                                     ),
                                   ),
                                 ),
-                                CircularMediaButton.mini(
+                                const SizedBox(width: 8),
+                                _MiniPlayerPlayControl(
                                   playing: playing,
                                   onPressed: () {
                                     if (playing) {
@@ -195,6 +178,33 @@ class MiniPlayerBar extends StatelessWidget {
           },
         );
       },
+    );
+  }
+}
+
+class _MiniPlayerPlayControl extends StatelessWidget {
+  const _MiniPlayerPlayControl({
+    required this.playing,
+    required this.onPressed,
+  });
+
+  final bool playing;
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      onPressed: onPressed,
+      padding: EdgeInsets.zero,
+      constraints: const BoxConstraints(
+        minWidth: 40,
+        minHeight: 40,
+      ),
+      icon: Icon(
+        playing ? Icons.pause_rounded : Icons.play_arrow_rounded,
+        color: AppColors.onBase,
+        size: 28,
+      ),
     );
   }
 }
@@ -308,9 +318,18 @@ double miniPlayerScrollPadding(BuildContext context) {
   final content = handler.currentContent;
   if (content == null) return 0;
 
-  final router = GoRouter.maybeOf(context);
-  final path = router?.state.uri.path ?? '';
-  if (ContentNavigation.isDetailPath(path, content.id)) return 0;
+  final container = ProviderScope.containerOf(context);
+  final activeDetailId = container.read(detailScreenContentIdProvider);
+  final onDetail = activeDetailId == content.id ||
+      ContentNavigation.isDetailPath(
+        ContentNavigation.currentRouterPath(GoRouter.of(context)),
+        content.id,
+      );
+
+  if (onDetail) {
+    final visible = container.read(detailMiniPlayerVisibleProvider);
+    return visible ? MiniPlayerBar.height : 0;
+  }
 
   return MiniPlayerBar.height;
 }

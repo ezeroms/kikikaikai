@@ -14,28 +14,42 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final currentIndex = navigationShell.currentIndex;
     final handler = MediaPlayback.handler;
 
     if (handler == null) {
-      return _buildScaffold(currentIndex, showBottomNav: true);
+      return _buildScaffold(navigationShell, showBottomNav: true);
     }
 
     return ValueListenableBuilder<bool>(
       valueListenable: handler.fullscreenVideoNotifier,
       builder: (context, fullscreen, _) {
-        return _buildScaffold(currentIndex, showBottomNav: !fullscreen);
+        return _buildScaffold(
+          navigationShell,
+          showBottomNav: !fullscreen,
+        );
       },
     );
   }
 
-  Widget _buildScaffold(int currentIndex, {required bool showBottomNav}) {
+  void _onBottomNavTap(StatefulNavigationShell navigationShell, int index) {
+    final currentIndex = navigationShell.currentIndex;
+    navigationShell.goBranch(
+      index,
+      initialLocation: index == 0 || index == currentIndex,
+    );
+  }
+
+  Widget _buildScaffold(
+    StatefulNavigationShell navigationShell, {
+    required bool showBottomNav,
+  }) {
+    final currentIndex = navigationShell.currentIndex;
     return Scaffold(
       body: navigationShell,
       bottomNavigationBar: showBottomNav
           ? BottomNavigationBar(
               currentIndex: currentIndex,
-              onTap: navigationShell.goBranch,
+              onTap: (index) => _onBottomNavTap(navigationShell, index),
               showSelectedLabels: false,
               showUnselectedLabels: false,
               items: [

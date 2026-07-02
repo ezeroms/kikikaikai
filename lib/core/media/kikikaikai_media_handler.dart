@@ -4,6 +4,8 @@ import 'package:audio_service/audio_service.dart';
 import 'package:audio_session/audio_session.dart';
 import 'package:flutter/foundation.dart';
 import 'package:just_audio/just_audio.dart';
+import 'package:kikikaikai/core/media/playback_speed.dart';
+import 'package:kikikaikai/core/media/sleep_timer_state.dart';
 import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
 import 'package:video_player/video_player.dart';
@@ -18,17 +20,23 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
   final AudioPlayer _audioPlayer = AudioPlayer();
   VideoPlayerController? _videoController;
   Timer? _previewTimer;
+  Timer? _sleepTimer;
   Timer? _videoProgressTimer;
   MediaKind _kind = MediaKind.audio;
   Content? _currentContent;
   String? _loadedAudioUrl;
   int _playEpoch = 0;
+  double _playbackSpeed = 1.0;
+  SleepTimerMode? _sleepTimerMode;
 
   final videoControllerNotifier = ValueNotifier<VideoPlayerController?>(null);
   final previewExpiredNotifier = ValueNotifier<bool>(false);
   final sessionActiveNotifier = ValueNotifier<bool>(false);
   final fullscreenVideoNotifier = ValueNotifier<bool>(false);
   final currentContentNotifier = ValueNotifier<Content?>(null);
+  final playbackSpeedNotifier = ValueNotifier<double>(1.0);
+  final sleepTimerNotifier = ValueNotifier<SleepTimerState?>(null);
+  final playingNotifier = ValueNotifier<bool>(false);
 
   Content? get currentContent => _currentContent;
   MediaKind get kind => _kind;
@@ -53,6 +61,10 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
 
     _audioPlayer.playerStateStream.listen((state) {
       if (_kind != MediaKind.audio) return;
+      if (state.processingState == ProcessingState.completed &&
+          _sleepTimerMode == SleepTimerMode.endOfEpisode) {
+        clearSleepTimer();
+      }
       _emitAudioPlaybackState(
         playing: state.playing,
         processingState: state.processingState,
@@ -78,6 +90,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
     required bool playing,
     required ProcessingState processingState,
   }) {
+    playingNotifier.value = playing;
     playbackState.add(_buildPlaybackState(
       playing: playing,
       processingState: _mapProcessingState(processingState),
@@ -119,9 +132,59 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
       playing: playing,
       updatePosition: position,
       bufferedPosition: bufferedPosition,
-      speed: 1.0,
+      speed: _playbackSpeed,
       queueIndex: 0,
     );
+  }
+
+  Future<void> setPlaybackSpeed(double speed) async {
+    _playbackSpeed = PlaybackSpeed.snap(speed);
+    playbackSpeedNotifier.value = _playbackSpeed;
+    if (_kind == MediaKind.audio) {
+      await _audioPlayer.setSpeed(_playbackSpeed);
+      _emitAudioPlaybackState(
+        playing: _audioPlayer.playing,
+        processingState: _audioPlayer.processingState,
+      );
+    }
+  }
+
+  void setSleepTimerDuration(Duration duration) {
+    clearSleepTimer();
+    final expiresAt = DateTime.now().add(duration);
+    _sleepTimerMode = SleepTimerMode.duration;
+    sleepTimerNotifier.value = SleepTimerState(
+      mode: SleepTimerMode.duration,
+      expiresAt: expiresAt,
+    );
+    _sleepTimer = Timer(duration, _onSleepTimerElapsed);
+  }
+
+  void setSleepTimerEndOfEpisode() {
+    clearSleepTimer();
+    _sleepTimerMode = SleepTimerMode.endOfEpisode;
+    sleepTimerNotifier.value = const SleepTimerState(
+      mode: SleepTimerMode.endOfEpisode,
+    );
+  }
+
+  void clearSleepTimer() {
+    _sleepTimer?.cancel();
+    _sleepTimer = null;
+    _sleepTimerMode = null;
+    sleepTimerNotifier.value = null;
+  }
+
+  Future<void> _onSleepTimerElapsed() async {
+    clearSleepTimer();
+    if (_kind == MediaKind.audio && _audioPlayer.playing) {
+      await pause();
+    }
+  }
+
+  Future<void> _applyPlaybackSpeed() async {
+    if (_kind != MediaKind.audio) return;
+    await _audioPlayer.setSpeed(_playbackSpeed);
   }
 
   Future<void> playContent(
@@ -134,6 +197,11 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
     final epoch = ++_playEpoch;
     previewExpiredNotifier.value = false;
     _previewTimer?.cancel();
+
+    if (_currentContent?.id != content.id &&
+        _sleepTimerMode == SleepTimerMode.endOfEpisode) {
+      clearSleepTimer();
+    }
 
     debugPrint(
       'playContent: id=${content.id} type=${content.type} '
@@ -187,6 +255,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
     _setCurrentContent(null);
     sessionActiveNotifier.value = false;
     previewExpiredNotifier.value = false;
+    playingNotifier.value = false;
   }
 
   MediaItem _toMediaItem(Content content) {
@@ -220,6 +289,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
       if (startPosition != null && startPosition > Duration.zero) {
         await _audioPlayer.seek(startPosition);
       }
+      await _applyPlaybackSpeed();
       await _audioPlayer.play();
       return;
     }
@@ -237,6 +307,8 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
     await _audioPlayer.setAudioSource(_resolveAudioSource(source));
     _loadedAudioUrl = source;
     if (epoch != _playEpoch) return;
+
+    await _applyPlaybackSpeed();
 
     if (_currentContent != null) {
       mediaItem.add(_toMediaItem(_currentContent!));
@@ -301,6 +373,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
     final controller = _videoController;
     if (controller == null || _kind != MediaKind.video) return;
     final value = controller.value;
+    playingNotifier.value = value.isPlaying;
     playbackState.add(_buildPlaybackState(
       playing: value.isPlaying,
       processingState: value.isInitialized
@@ -350,6 +423,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
   Future<void> stop() async {
     _playEpoch++;
     _previewTimer?.cancel();
+    clearSleepTimer();
     _loadedAudioUrl = null;
     if (_kind == MediaKind.video) {
       await _disposeVideo();
@@ -359,6 +433,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
     previewExpiredNotifier.value = false;
     _setCurrentContent(null);
     sessionActiveNotifier.value = false;
+    playingNotifier.value = false;
   }
 
   @override
@@ -378,6 +453,7 @@ class KikikaikaiMediaHandler extends BaseAudioHandler with SeekHandler {
 
   Future<void> disposeHandler() async {
     _previewTimer?.cancel();
+    clearSleepTimer();
     await _audioPlayer.dispose();
     await _disposeVideo();
   }

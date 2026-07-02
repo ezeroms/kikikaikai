@@ -6,8 +6,6 @@ import 'package:kikikaikai/core/models/figure.dart';
 
 /// Figure チップ同士の横方向の間隔
 const _figureChipSpacing = 20.0;
-const _compactNameMaxWidth = 72.0;
-const _defaultNameMaxWidth = 120.0;
 
 /// [Figure chips] …… [投稿日] [任意: アクセスラベル]
 ///
@@ -70,7 +68,6 @@ class FigureMetaRow extends StatelessWidget {
                       figure: figures[i],
                       avatarRadius: avatarRadius,
                       nameStyle: resolvedNameStyle,
-                      constrainNameWidth: true,
                     ),
                   ],
                 ],
@@ -101,7 +98,8 @@ class FigureMetaRow extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Expanded(
+        Flexible(
+          fit: FlexFit.loose,
           child: Align(
             alignment: Alignment.centerLeft,
             child: compact
@@ -112,11 +110,13 @@ class FigureMetaRow extends StatelessWidget {
                 : figureChips,
           ),
         ),
-        if (showDate)
+        if (showDate) ...[
+          const SizedBox(width: 8),
           Text(
             dateLabel,
             style: dateStyle,
           ),
+        ],
         if (accessLabel != null && accessLabel!.isNotEmpty) ...[
           const SizedBox(width: 8),
           _AccessLabel(text: accessLabel!),
@@ -133,26 +133,14 @@ class FigureLinkChip extends StatelessWidget {
     required this.figure,
     required this.avatarRadius,
     required this.nameStyle,
-    this.constrainNameWidth = false,
   });
 
   final Figure figure;
   final double avatarRadius;
   final TextStyle nameStyle;
-  final bool constrainNameWidth;
 
   @override
   Widget build(BuildContext context) {
-    final nameWidget = Text(
-      figure.name,
-      style: nameStyle,
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-    );
-
-    final nameMaxWidth =
-        constrainNameWidth ? _compactNameMaxWidth : _defaultNameMaxWidth;
-
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -167,9 +155,11 @@ class FigureLinkChip extends StatelessWidget {
               backgroundImage: AssetImage(figure.avatarAsset),
             ),
             const SizedBox(width: 8),
-            ConstrainedBox(
-              constraints: BoxConstraints(maxWidth: nameMaxWidth),
-              child: nameWidget,
+            Text(
+              figure.name,
+              style: nameStyle,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
           ],
         ),

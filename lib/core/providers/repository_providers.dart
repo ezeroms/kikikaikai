@@ -5,6 +5,7 @@ import 'package:kikikaikai/data/repositories/content_comments_repository.dart';
 import 'package:kikikaikai/data/repositories/content_engagement_repository.dart';
 import 'package:kikikaikai/data/repositories/content_repository.dart';
 import 'package:kikikaikai/data/repositories/figure_repository.dart';
+import 'package:kikikaikai/data/repositories/local_content_comments_repository.dart';
 import 'package:kikikaikai/data/repositories/local_content_repository.dart';
 import 'package:kikikaikai/data/repositories/local_figure_repository.dart';
 import 'package:kikikaikai/data/repositories/mock_auth_repository.dart';
@@ -34,7 +35,7 @@ final contentEngagementRepositoryProvider =
 
 final contentCommentsRepositoryProvider =
     Provider<ContentCommentsRepository>(
-  (ref) => MockContentCommentsRepository(),
+  (ref) => LocalContentCommentsRepository(ref.watch(appDatabaseProvider)),
 );
 
 final searchHistoryRepositoryProvider = Provider<SearchHistoryRepository>(

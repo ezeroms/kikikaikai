@@ -3,6 +3,7 @@ import 'package:kikikaikai/core/models/content_type.dart';
 import 'package:kikikaikai/data/dummy/dummy_contents.dart';
 import 'package:kikikaikai/data/local/app_database.dart';
 import 'package:kikikaikai/data/local/dummy_database_seed.dart';
+import 'package:kikikaikai/data/repositories/local_content_comments_repository.dart';
 import 'package:kikikaikai/data/repositories/local_content_repository.dart';
 import 'package:kikikaikai/data/repositories/local_figure_repository.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
@@ -90,6 +91,23 @@ void main() {
     for (final video in videos) {
       expect(video.title, expectedById[video.id]);
     }
+  });
+
+  test('syncCatalog seeds transcripts and comments', () async {
+    final database = await AppDatabase.open(inMemory: true);
+    addTearDown(database.close);
+
+    final contentRepository = LocalContentRepository(database);
+    final commentsRepository = LocalContentCommentsRepository(database);
+
+    final kikikaikai = await contentRepository.getById('c016');
+    expect(kikikaikai?.transcript, isNotNull);
+    expect(kikikaikai!.transcript!.trim(), isNotEmpty);
+
+    final comments = await commentsRepository.load('c016');
+    expect(comments.length, greaterThanOrEqualTo(3));
+    expect(comments.first.authorName, isNotEmpty);
+    expect(comments.first.authorAvatarAsset, isNotNull);
   });
 
   test('repository read resyncs stale titles from dummy contents', () async {

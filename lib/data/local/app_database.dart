@@ -11,7 +11,7 @@ class AppDatabase {
   Database get raw => _db;
 
   static const _dbName = 'kikikaikai.db';
-  static const _schemaVersion = 2;
+  static const _schemaVersion = 4;
 
   static Future<AppDatabase> open({bool inMemory = false}) async {
     final db = await openDatabase(
@@ -49,7 +49,8 @@ class AppDatabase {
         preview_duration_ms INTEGER NOT NULL DEFAULT 30000,
         media_duration_ms INTEGER,
         external_url TEXT,
-        card_subtitle TEXT
+        card_subtitle TEXT,
+        transcript TEXT
       )
     ''');
 
@@ -75,6 +76,26 @@ class AppDatabase {
     );
 
     await _createMetaTable(db);
+    await _createContentCommentsTable(db);
+  }
+
+  static Future<void> _createContentCommentsTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS content_comments (
+        id TEXT PRIMARY KEY,
+        content_id TEXT NOT NULL,
+        author_name TEXT NOT NULL,
+        author_avatar_asset TEXT,
+        body TEXT NOT NULL,
+        created_at INTEGER NOT NULL,
+        is_seed INTEGER NOT NULL DEFAULT 0,
+        FOREIGN KEY (content_id) REFERENCES contents(id)
+      )
+    ''');
+    await db.execute(
+      'CREATE INDEX IF NOT EXISTS idx_content_comments_content '
+      'ON content_comments(content_id, created_at DESC)',
+    );
   }
 
   static Future<void> _createMetaTable(Database db) async {
@@ -93,6 +114,15 @@ class AppDatabase {
   ) async {
     if (oldVersion < 2) {
       await _createMetaTable(db);
+    }
+    if (oldVersion < 3) {
+      await db.execute('ALTER TABLE contents ADD COLUMN transcript TEXT');
+      await _createContentCommentsTable(db);
+    }
+    if (oldVersion < 4) {
+      await db.execute(
+        'ALTER TABLE content_comments ADD COLUMN author_avatar_asset TEXT',
+      );
     }
   }
 

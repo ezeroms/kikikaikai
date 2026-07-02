@@ -51,6 +51,7 @@ abstract final class CatalogMappers {
           : Duration(milliseconds: mediaDurationMs),
       externalUrl: row['external_url'] as String?,
       cardSubtitle: row['card_subtitle'] as String?,
+      transcript: row['transcript'] as String?,
     );
   }
 
@@ -69,6 +70,7 @@ abstract final class CatalogMappers {
       'media_duration_ms': content.mediaDuration?.inMilliseconds,
       'external_url': content.externalUrl,
       'card_subtitle': content.cardSubtitle,
+      'transcript': content.transcript,
     };
   }
 }

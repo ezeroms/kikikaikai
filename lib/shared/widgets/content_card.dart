@@ -19,11 +19,13 @@ class ContentCard extends ConsumerWidget {
     required this.content,
     this.width,
     this.height,
+    this.showPlayButton = true,
   });
 
   final Content content;
   final double? width;
   final double? height;
+  final bool showPlayButton;
 
   static const _radius = 12.0;
 
@@ -33,7 +35,7 @@ class ContentCard extends ConsumerWidget {
     final userTier = ref.watch(userTierProvider);
     final canAccess = userTier.canAccess(content.accessLevel);
     final canPlay = ContentCardPlayback.isPlayable(content, userTier);
-    final showsPlayButton =
+    final showsPlayButton = showPlayButton &&
         ContentCardPlayback.showsCardPlayButton(content, userTier);
     final details = _ContentCardDetails(
       content: content,

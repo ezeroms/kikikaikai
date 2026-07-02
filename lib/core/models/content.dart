@@ -17,6 +17,7 @@ class Content {
     this.mediaDuration,
     this.externalUrl,
     this.cardSubtitle,
+    this.transcript,
   });
 
   final String id;
@@ -35,6 +36,9 @@ class Content {
 
   /// カード上にタイトル下へ表示するサブテキスト（null ならタイトルのみ）
   final String? cardSubtitle;
+
+  /// 音声コンテンツの書き起こし
+  final String? transcript;
 
   String get displayThumbnail => thumbnailAsset ?? type.iconAsset;
 

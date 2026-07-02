@@ -1,6 +1,5 @@
 import 'package:audio_service/audio_service.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
@@ -162,10 +161,10 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                                 IconButton(
                                   iconSize: 36,
                                   onPressed: () => handler.seek(
-                                    position - const Duration(seconds: 15),
+                                    position - const Duration(seconds: 10),
                                   ),
                                   icon: const Icon(
-                                    LucideIcons.rotate_ccw,
+                                    Icons.replay_10_rounded,
                                     color: AppColors.secondary,
                                   ),
                                 ),
@@ -182,10 +181,10 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                                 IconButton(
                                   iconSize: 36,
                                   onPressed: () => handler.seek(
-                                    position + const Duration(seconds: 15),
+                                    position + const Duration(seconds: 10),
                                   ),
                                   icon: const Icon(
-                                    LucideIcons.rotate_cw,
+                                    Icons.forward_10_rounded,
                                     color: AppColors.secondary,
                                   ),
                                 ),

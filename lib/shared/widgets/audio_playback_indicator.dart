@@ -42,10 +42,15 @@ class AudioPlaybackIndicator extends StatelessWidget {
       final left = resolvedTotalMs - progress.positionMs;
       final remaining =
           Duration(milliseconds: left.clamp(0, resolvedTotalMs));
-      statusText = '$dateLabel ・ ${formatMediaDurationRemaining(remaining)}';
+      statusText = _joinDateAndDuration(
+        dateLabel,
+        formatMediaDurationRemaining(remaining),
+      );
     } else if (resolvedTotalMs != null && resolvedTotalMs > 0) {
-      statusText =
-          '$dateLabel ・ ${formatMediaDuration(Duration(milliseconds: resolvedTotalMs))}';
+      statusText = _joinDateAndDuration(
+        dateLabel,
+        formatMediaDuration(Duration(milliseconds: resolvedTotalMs)),
+      );
     } else {
       statusText = dateLabel;
     }
@@ -95,5 +100,11 @@ class AudioPlaybackIndicator extends StatelessWidget {
         ],
       ],
     );
+  }
+
+  static String _joinDateAndDuration(String date, String duration) {
+    if (date.isEmpty) return duration;
+    if (duration.isEmpty) return date;
+    return '$date ・ $duration';
   }
 }
