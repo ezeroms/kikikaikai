@@ -12,17 +12,52 @@ abstract final class HomeFeed {
     ContentType.manuscript,
   };
 
+  static const _recommendedCarouselTypes = {
+    ContentType.audio,
+    ContentType.video,
+    ContentType.kikikaikai,
+    ContentType.manuscript,
+  };
+
+  /// 投稿日の新しい順に並べ替えたコピーを返す。
+  static List<Content> sortByPublishedAtDesc(List<Content> contents) {
+    return [...contents]..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+  }
+
   static List<Content> _sorted(Iterable<Content> items) {
-    return [...items]..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    return sortByPublishedAtDesc(items.toList());
   }
 
   static List<Content> _eligible(List<Content> all) {
     return _sorted(all.where((c) => _featuredTypes.contains(c.type)));
   }
 
-  /// おすすめ（大きな縦カード）
+  /// おすすめ（大きな縦カード）— 回覧板は除外し、テレビ・ラジオを含める
   static List<Content> recommended(List<Content> all) {
-    return _eligible(all).take(5).toList();
+    final result = <Content>[];
+    final used = <String>{};
+
+    for (final type in [
+      ContentType.video,
+      ContentType.audio,
+      ContentType.kikikaikai,
+      ContentType.manuscript,
+    ]) {
+      final latest = _sorted(all.where((c) => c.type == type)).firstOrNull;
+      if (latest != null && used.add(latest.id)) {
+        result.add(latest);
+      }
+    }
+
+    for (final content in _sorted(
+      all.where((c) => _recommendedCarouselTypes.contains(c.type)),
+    )) {
+      if (result.length >= 5) break;
+      if (used.add(content.id)) result.add(content);
+    }
+
+    result.sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+    return result;
   }
 
   /// 新着
@@ -36,11 +71,16 @@ abstract final class HomeFeed {
     ).take(6).toList();
   }
 
-  static List<Content> _slice(List<Content> all, int start, int count) {
+  /// おすすめ対象から循環的に切り出す（セクション見出し用の仮割り当て）
+  static List<Content> _rotatedFeaturedSlice(
+    List<Content> all, {
+    required int startIndex,
+    required int count,
+  }) {
     final items = _eligible(all);
     if (items.isEmpty) return [];
     return [
-      for (var i = 0; i < count; i++) items[(start + i) % items.length],
+      for (var i = 0; i < count; i++) items[(startIndex + i) % items.length],
     ];
   }
 
@@ -54,27 +94,33 @@ abstract final class HomeFeed {
     ).take(6).toList();
   }
 
-  static List<Content> music(List<Content> all) {
+  /// 音楽セクション — 団地ラジオと奇奇怪怪
+  static List<Content> audioAndPodcast(List<Content> all) {
     return _byTypes(all, {ContentType.audio, ContentType.kikikaikai});
   }
 
-  static List<Content> film(List<Content> all) {
+  /// 映画セクション — 街頭テレビ
+  static List<Content> video(List<Content> all) {
     return _byTypes(all, {ContentType.video});
   }
 
-  static List<Content> books(List<Content> all) {
+  /// 本セクション — 玉置玉稿
+  static List<Content> manuscript(List<Content> all) {
     return _byTypes(all, {ContentType.manuscript});
   }
 
-  static List<Content> fashion(List<Content> all) {
-    return _slice(all, 0, 6);
+  /// ファッションセクション — 仮の循環割り当て
+  static List<Content> fashionPlaceholder(List<Content> all) {
+    return _rotatedFeaturedSlice(all, startIndex: 0, count: 6);
   }
 
-  static List<Content> politics(List<Content> all) {
+  /// 政治・社会セクション — 回覧板
+  static List<Content> bulletin(List<Content> all) {
     return _byTypes(all, {ContentType.bulletin});
   }
 
-  static List<Content> business(List<Content> all) {
+  /// ビジネスセクション — 回覧板・団地便・旧作倉庫
+  static List<Content> shopArchiveAndBulletin(List<Content> all) {
     return _sorted(
       all.where(
         (c) =>
@@ -85,19 +131,20 @@ abstract final class HomeFeed {
     ).take(6).toList();
   }
 
-  static List<Content> baseball(List<Content> all) {
-    return _slice(all, 4, 6);
+  /// 野球セクション — 仮の循環割り当て
+  static List<Content> baseballPlaceholder(List<Content> all) {
+    return _rotatedFeaturedSlice(all, startIndex: 4, count: 6);
   }
 
   static const sections = <({String? title, List<Content> Function(List<Content>) items})>[
     (title: '新着', items: newest),
     (title: 'はじめて見る人', items: newcomers),
-    (title: '音楽', items: music),
-    (title: '映画', items: film),
-    (title: '本', items: books),
-    (title: 'ファッション', items: fashion),
-    (title: '政治・社会', items: politics),
-    (title: 'ビジネス', items: business),
-    (title: '野球', items: baseball),
+    (title: '音楽', items: audioAndPodcast),
+    (title: '映画', items: video),
+    (title: '本', items: manuscript),
+    (title: 'ファッション', items: fashionPlaceholder),
+    (title: '政治・社会', items: bulletin),
+    (title: 'ビジネス', items: shopArchiveAndBulletin),
+    (title: '野球', items: baseballPlaceholder),
   ];
 }

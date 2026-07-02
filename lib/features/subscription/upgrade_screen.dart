@@ -34,7 +34,7 @@ class UpgradeScreen extends ConsumerWidget {
             const SizedBox(height: 8),
             Text(
               'すべてのコンテンツが閲覧できます。',
-              style: AppTypography.body(color: AppColors.summerWood),
+              style: AppTypography.body(color: AppColors.secondary),
             ),
             const SizedBox(height: 32),
             _PlanCard(
@@ -106,22 +106,22 @@ class _PlanCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: highlighted ? AppColors.darkSurface : Colors.transparent,
+        color: highlighted ? AppColors.surfaceElevated : Colors.transparent,
         border: Border.all(
-          color: highlighted ? AppColors.mangoTango : AppColors.riverRoad,
+          color: highlighted ? AppColors.primary : AppColors.tertiary,
           width: highlighted ? 2 : 1,
         ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(floor, style: AppTypography.label(color: AppColors.mangoTango)),
+          Text(floor, style: AppTypography.label(color: AppColors.primary)),
           const SizedBox(height: 4),
           Text(price, style: AppTypography.heading(size: 18)),
           const SizedBox(height: 4),
           Text(
             description,
-            style: AppTypography.body(size: 13, color: AppColors.shuttleGray),
+            style: AppTypography.body(size: 13, color: AppColors.muted),
           ),
         ],
       ),

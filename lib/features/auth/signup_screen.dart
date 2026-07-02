@@ -41,7 +41,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen> {
       );
       return;
     }
-    context.go('/browse');
+    context.go('/home');
   }
 
   @override

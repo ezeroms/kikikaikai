@@ -24,8 +24,8 @@ class WelcomeScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 TextButton(
-                  onPressed: () => context.go('/browse'),
-                  child: const Text('とりあえず見学'),
+                  onPressed: () => context.go('/home'),
+                  child: const Text('とりあえず内見'),
                 ),
               ],
             ),

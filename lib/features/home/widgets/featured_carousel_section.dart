@@ -13,7 +13,6 @@ class FeaturedCarouselSection extends StatefulWidget {
 }
 
 class _FeaturedCarouselSectionState extends State<FeaturedCarouselSection> {
-  static const _carouselHeight = 520.0;
   static const _virtualLoops = 1000;
 
   late final PageController _pageController;
@@ -46,7 +45,7 @@ class _FeaturedCarouselSectionState extends State<FeaturedCarouselSection> {
 
     if (_itemCount == 1) {
       return SizedBox(
-        height: _carouselHeight,
+        height: FeaturedContentCard.carouselHeight,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 6),
           child: FeaturedContentCard(content: widget.contents.first),
@@ -55,7 +54,7 @@ class _FeaturedCarouselSectionState extends State<FeaturedCarouselSection> {
     }
 
     return SizedBox(
-      height: _carouselHeight,
+      height: FeaturedContentCard.carouselHeight,
       child: PageView.builder(
         controller: _pageController,
         itemCount: _virtualLoops * _itemCount * 2,

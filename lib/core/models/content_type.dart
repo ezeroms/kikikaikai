@@ -20,6 +20,18 @@ enum ContentType {
   bool get isAudioPlayback =>
       this == ContentType.audio || this == ContentType.kikikaikai;
 
+  bool get isTextArticle =>
+      this == ContentType.bulletin || this == ContentType.manuscript;
+
+  /// 詳細画面で「書き起こし」タブを表示する（奇奇怪怪・ラジオ）
+  bool get hasTranscriptTab => isAudioPlayback;
+
+  /// 詳細画面で本編・コメント（＋任意で書き起こし）タブを使う
+  bool get usesTabbedDetail =>
+      isAudioPlayback || this == ContentType.video || isTextArticle;
+
+  bool get usesCompactCategoryCard => isTextArticle || isAudioPlayback;
+
   String get iconAsset => switch (this) {
         ContentType.bulletin => 'assets/branding/eye_catch/kairanban.png',
         ContentType.manuscript => 'assets/branding/eye_catch/gyokko.png',

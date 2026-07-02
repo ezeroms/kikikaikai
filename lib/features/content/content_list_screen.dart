@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
+import 'package:kikikaikai/app/content_navigation.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
+import 'package:kikikaikai/core/format/format_content_date.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
 import 'package:kikikaikai/core/models/access_level.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
@@ -18,8 +18,6 @@ class ContentListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final contentsAsync = ref.watch(contentsByTypeProvider(type));
     final userTier = ref.watch(userTierProvider);
-    final dateFormat = DateFormat('yyyy.MM.dd');
-
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -39,7 +37,7 @@ class ContentListScreen extends ConsumerWidget {
             return Center(
               child: Text(
                 'コンテンツがありません',
-                style: AppTypography.body(color: AppColors.shuttleGray),
+                style: AppTypography.body(color: AppColors.muted),
               ),
             );
           }
@@ -50,13 +48,13 @@ class ContentListScreen extends ConsumerWidget {
               final content = contents[index];
               final locked = !userTier.canAccess(content.accessLevel);
               return InkWell(
-                onTap: () => context.push('/content/${content.id}'),
+                onTap: () => ContentNavigation.openDetail(context, content.id),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     PaperTapeHeading(
                       title: content.title,
-                      date: dateFormat.format(content.publishedAt),
+                      date: formatContentDate(content.publishedAt),
                       isOdd: index.isOdd,
                     ),
                     Padding(
@@ -68,7 +66,7 @@ class ContentListScreen extends ConsumerWidget {
                               content.description,
                               style: AppTypography.body(
                                 size: 13,
-                                color: AppColors.shuttleGray,
+                                color: AppColors.muted,
                               ),
                               maxLines: 2,
                               overflow: TextOverflow.ellipsis,
@@ -78,7 +76,7 @@ class ContentListScreen extends ConsumerWidget {
                             const Icon(
                               Icons.lock_outline,
                               size: 16,
-                              color: AppColors.mangoTango,
+                              color: AppColors.primary,
                             ),
                           if (content.accessLevel != AccessLevel.public)
                             Container(
@@ -89,7 +87,7 @@ class ContentListScreen extends ConsumerWidget {
                               ),
                               decoration: BoxDecoration(
                                 border: Border.all(
-                                  color: AppColors.riverRoad,
+                                  color: AppColors.tertiary,
                                 ),
                               ),
                               child: Text(

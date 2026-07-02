@@ -2,8 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
+import 'package:kikikaikai/core/media/media_playback.dart';
 import 'package:kikikaikai/features/home/home_screen.dart';
-import 'package:kikikaikai/features/saved/saved_screen.dart';
+import 'package:kikikaikai/features/profile/account_tab_screen.dart';
 import 'package:kikikaikai/features/search/search_screen.dart';
 
 class MainShell extends StatelessWidget {
@@ -13,49 +14,67 @@ class MainShell extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final currentIndex = navigationShell.currentIndex;
+    final handler = MediaPlayback.handler;
+
+    if (handler == null) {
+      return _buildScaffold(currentIndex, showBottomNav: true);
+    }
+
+    return ValueListenableBuilder<bool>(
+      valueListenable: handler.fullscreenVideoNotifier,
+      builder: (context, fullscreen, _) {
+        return _buildScaffold(currentIndex, showBottomNav: !fullscreen);
+      },
+    );
+  }
+
+  Widget _buildScaffold(int currentIndex, {required bool showBottomNav}) {
     return Scaffold(
       body: navigationShell,
-      bottomNavigationBar: BottomNavigationBar(
-        currentIndex: navigationShell.currentIndex,
-        onTap: navigationShell.goBranch,
-        showSelectedLabels: false,
-        showUnselectedLabels: false,
-        items: [
-          BottomNavigationBarItem(
-            icon: Icon(
-              LucideIcons.house,
-              color: navigationShell.currentIndex == 0
-                  ? AppColors.mangoTango
-                  : AppColors.shuttleGray,
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              LucideIcons.search,
-              color: navigationShell.currentIndex == 1
-                  ? AppColors.mangoTango
-                  : AppColors.shuttleGray,
-            ),
-            label: '',
-          ),
-          BottomNavigationBarItem(
-            icon: Icon(
-              LucideIcons.bookmark,
-              color: navigationShell.currentIndex == 2
-                  ? AppColors.mangoTango
-                  : AppColors.shuttleGray,
-            ),
-            label: '',
-          ),
-        ],
-      ),
+      bottomNavigationBar: showBottomNav
+          ? BottomNavigationBar(
+              currentIndex: currentIndex,
+              onTap: navigationShell.goBranch,
+              showSelectedLabels: false,
+              showUnselectedLabels: false,
+              items: [
+                BottomNavigationBarItem(
+                  icon: Icon(
+                    LucideIcons.house,
+                    color: currentIndex == 0
+                        ? AppColors.onBase
+                        : AppColors.muted,
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(
+                    LucideIcons.search,
+                    color: currentIndex == 1
+                        ? AppColors.onBase
+                        : AppColors.muted,
+                  ),
+                  label: '',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(
+                    LucideIcons.circle_user,
+                    color: currentIndex == 2
+                        ? AppColors.onBase
+                        : AppColors.muted,
+                  ),
+                  label: '',
+                ),
+              ],
+            )
+          : null,
     );
   }
 }
 
 class MainShellBranch {
-  static Widget browse() => const HomeScreen();
+  static Widget home() => const HomeScreen();
   static Widget search() => const SearchScreen();
-  static Widget saved() => const SavedScreen();
+  static Widget mypage() => const AccountTabScreen();
 }

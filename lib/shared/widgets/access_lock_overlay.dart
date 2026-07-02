@@ -36,7 +36,7 @@ class AccessLockOverlay extends StatelessWidget {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.lock_outline, color: AppColors.summerWood, size: 48),
+              const Icon(Icons.lock_outline, color: AppColors.secondary, size: 48),
               const SizedBox(height: 16),
               Text(
                 accessLevel.label,

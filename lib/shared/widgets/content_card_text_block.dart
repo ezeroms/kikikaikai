@@ -12,6 +12,7 @@ class ContentCardTextBlock extends StatelessWidget {
     this.subtitleStyle,
     this.subtitleMaxLines = 2,
     this.textAlign = TextAlign.start,
+    this.titleSubtitleGap = 8,
   });
 
   final String title;
@@ -20,6 +21,7 @@ class ContentCardTextBlock extends StatelessWidget {
   final TextStyle? subtitleStyle;
   final int subtitleMaxLines;
   final TextAlign textAlign;
+  final double titleSubtitleGap;
 
   @override
   Widget build(BuildContext context) {
@@ -39,13 +41,13 @@ class ContentCardTextBlock extends StatelessWidget {
           textAlign: textAlign,
         ),
         if (hasSubtitle) ...[
-          const SizedBox(height: 4),
+          SizedBox(height: titleSubtitleGap),
           Text(
             subtitle!,
             style: subtitleStyle ??
                 AppTypography.body(
                   size: 14,
-                  color: AppColors.shuttleGray,
+                  color: AppColors.muted,
                   weight: FontWeight.w400,
                 ),
             maxLines: subtitleMaxLines,

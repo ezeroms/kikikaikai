@@ -1,18 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
-import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
+import 'package:kikikaikai/core/format/format_content_date.dart';
 import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
 import 'package:kikikaikai/core/models/user_tier.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
-import 'package:kikikaikai/features/content/widgets/radio_player_widget.dart';
-import 'package:kikikaikai/features/content/widgets/tv_player_widget.dart';
+import 'package:kikikaikai/features/content/widgets/tabbed_content_detail_screen.dart';
 import 'package:kikikaikai/shared/widgets/access_lock_overlay.dart';
-import 'package:kikikaikai/shared/widgets/author_meta_row.dart';
+import 'package:kikikaikai/shared/widgets/rich_markdown_body.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 class ContentDetailScreen extends ConsumerWidget {
@@ -35,118 +33,128 @@ class ContentDetailScreen extends ConsumerWidget {
     }
   }
 
+  TextStyle get _dateStyle => AppTypography.body(
+        size: 14,
+        color: AppColors.muted,
+        weight: FontWeight.w400,
+      );
+
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final contentAsync = ref.watch(contentByIdProvider(contentId));
     final userTier = ref.watch(userTierProvider);
-    final savedIds = ref.watch(savedIdsProvider).valueOrNull ?? [];
-    final isSaved = savedIds.contains(contentId);
+    final downloadIds = ref.watch(downloadIdsProvider).valueOrNull ?? [];
+    final isDownloaded = downloadIds.contains(contentId);
 
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('詳細'),
-        actions: [
-          IconButton(
-            onPressed: () async {
-              await ref.read(savedIdsProvider.notifier).toggle(contentId);
-            },
-            icon: Icon(
-              isSaved ? LucideIcons.bookmark_check : LucideIcons.bookmark,
-              color: isSaved ? AppColors.mangoTango : AppColors.summerWood,
-            ),
-            tooltip: isSaved ? '保存済み' : '保存する',
-          ),
-        ],
+    ref.listen(contentByIdProvider(contentId), (previous, next) {
+      final content = next.valueOrNull;
+      if (content != null && content.type.isTextArticle) {
+        ref.read(contentEngagementProvider.notifier).markViewed(content.id);
+      }
+    });
+
+    return contentAsync.when(
+      loading: () => Scaffold(
+        appBar: AppBar(),
+        body: const Center(child: CircularProgressIndicator()),
       ),
-      body: contentAsync.when(
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('読み込みエラー: $e')),
-        data: (content) {
-          if (content == null) {
-            return const Center(child: Text('コンテンツが見つかりません'));
-          }
-          final canAccess = _canAccess(content, userTier);
-          final previewOnly = _isPreviewOnly(content, userTier);
-          final showPlayer = content.mediaUrl != null && (canAccess || previewOnly);
-          final authorAsync = ref.watch(authorByIdProvider(content.authorId));
+      error: (e, _) => Scaffold(
+        appBar: AppBar(),
+        body: Center(child: Text('読み込みエラー: $e')),
+      ),
+      data: (content) {
+        if (content == null) {
+          return Scaffold(
+            appBar: AppBar(),
+            body: const Center(child: Text('コンテンツが見つかりません')),
+          );
+        }
 
-          return Stack(
+        final canAccess = _canAccess(content, userTier);
+        final previewOnly = _isPreviewOnly(content, userTier);
+
+        if (content.type.usesTabbedDetail) {
+          return TabbedContentDetailScreen(
+            content: content,
+            userTier: userTier,
+            canAccess: canAccess,
+            previewOnly: previewOnly,
+            isDownloaded: isDownloaded,
+          );
+        }
+
+        return Scaffold(
+          appBar: AppBar(
+            title: Text(content.type.label),
+            actions: [
+              IconButton(
+                onPressed: () async {
+                  await ref
+                      .read(downloadIdsProvider.notifier)
+                      .toggleDownload(contentId);
+                },
+                icon: Icon(
+                  isDownloaded
+                      ? LucideIcons.circle_check
+                      : LucideIcons.download,
+                  color: isDownloaded ? AppColors.primary : AppColors.secondary,
+                ),
+                tooltip: isDownloaded ? 'ダウンロード済み' : 'ダウンロード',
+              ),
+            ],
+          ),
+          body: Stack(
             children: [
               SingleChildScrollView(
-                padding: const EdgeInsets.all(20),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    Row(
-                      children: [
-                        Image.asset(
-                          content.type.iconAsset,
-                          width: 32,
-                          height: 32,
-                        ),
-                        const SizedBox(width: 8),
-                        Text(
-                          content.type.label,
-                          style: AppTypography.overline(),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      content.title,
-                      style: AppTypography.title(size: 22),
-                    ),
-                    const SizedBox(height: 8),
-                    authorAsync.when(
-                      loading: () => const SizedBox.shrink(),
-                      error: (_, _) => const SizedBox.shrink(),
-                      data: (author) {
-                        return AuthorMetaRow(
-                          author: author,
-                          dateLabel: DateFormat('yyyy年M月d日')
-                              .format(content.publishedAt),
-                          avatarRadius: 14,
-                        );
-                      },
-                    ),
-                    const SizedBox(height: 20),
-                    if (showPlayer && content.type == ContentType.video)
-                      TvPlayerWidget(
-                        key: ValueKey(content.id),
-                        content: content,
-                        previewLimit: previewOnly
-                            ? const Duration(seconds: 30)
-                            : null,
+                    AspectRatio(
+                      aspectRatio: 16 / 9,
+                      child: Image.asset(
+                        content.displayThumbnail,
+                        fit: BoxFit.cover,
                       ),
-                    if (showPlayer && content.type.isAudioPlayback)
-                      RadioPlayerWidget(
-                        key: ValueKey(content.id),
-                        content: content,
-                        previewLimit: previewOnly
-                            ? const Duration(seconds: 30)
-                            : null,
-                      ),
-                    if (content.bodyMarkdown != null && canAccess)
-                      MarkdownBody(
-                        data: content.bodyMarkdown!,
-                        styleSheet: MarkdownStyleSheet(
-                          p: AppTypography.body(size: 15),
-                          h1: AppTypography.heading(size: 20),
-                          h2: AppTypography.heading(size: 18),
-                          blockquote: AppTypography.body(
-                            color: AppColors.summerWood,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Image.asset(
+                                content.type.iconAsset,
+                                width: 32,
+                                height: 32,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                content.type.label,
+                                style: AppTypography.overline(),
+                              ),
+                              const Spacer(),
+                              Text(
+                                formatContentDate(content.publishedAt),
+                                style: _dateStyle,
+                              ),
+                            ],
                           ),
-                        ),
+                          if (content.bodyMarkdown != null && canAccess)
+                            RichMarkdownBody(data: content.bodyMarkdown!),
+                          if (content.type == ContentType.shop &&
+                              content.externalUrl != null &&
+                              canAccess) ...[
+                            const SizedBox(height: 24),
+                            ElevatedButton(
+                              onPressed: () =>
+                                  _openExternal(content.externalUrl!),
+                              child: const Text('購入サイトへ'),
+                            ),
+                          ],
+                        ],
                       ),
-                    if (content.type == ContentType.shop &&
-                        content.externalUrl != null &&
-                        canAccess) ...[
-                      const SizedBox(height: 24),
-                      ElevatedButton(
-                        onPressed: () => _openExternal(content.externalUrl!),
-                        child: const Text('購入サイトへ'),
-                      ),
-                    ],
+                    ),
                     const SizedBox(height: 80),
                   ],
                 ),
@@ -157,9 +165,9 @@ class ContentDetailScreen extends ConsumerWidget {
                   userTier: userTier,
                 ),
             ],
-          );
-        },
-      ),
+          ),
+        );
+      },
     );
   }
 }

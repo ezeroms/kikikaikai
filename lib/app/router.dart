@@ -8,23 +8,38 @@ import 'package:kikikaikai/features/auth/signup_screen.dart';
 import 'package:kikikaikai/features/auth/welcome_screen.dart';
 import 'package:kikikaikai/features/content/content_detail_screen.dart';
 import 'package:kikikaikai/features/content/content_list_screen.dart';
-import 'package:kikikaikai/features/profile/profile_screen.dart';
+import 'package:kikikaikai/features/downloads/downloads_screen.dart';
+import 'package:kikikaikai/features/figure/figure_contents_screen.dart';
 import 'package:kikikaikai/features/subscription/upgrade_screen.dart';
 
 final _rootNavigatorKey = GlobalKey<NavigatorState>();
-final _shellNavigatorBrowseKey =
-    GlobalKey<NavigatorState>(debugLabel: 'browse');
+final _shellNavigatorHomeKey =
+    GlobalKey<NavigatorState>(debugLabel: 'home');
 final _shellNavigatorSearchKey =
     GlobalKey<NavigatorState>(debugLabel: 'search');
-final _shellNavigatorSavedKey =
-    GlobalKey<NavigatorState>(debugLabel: 'saved');
+final _shellNavigatorMypageKey =
+    GlobalKey<NavigatorState>(debugLabel: 'mypage');
+
+GoRoute _contentDetailRoute() {
+  return GoRoute(
+    path: 'content/:id',
+    builder: (context, state) => ContentDetailScreen(
+      contentId: state.pathParameters['id']!,
+    ),
+  );
+}
 
 final routerProvider = Provider<GoRouter>((ref) {
   return GoRouter(
     navigatorKey: _rootNavigatorKey,
     initialLocation: '/welcome',
     redirect: (context, state) {
-      if (state.uri.path == '/home') return '/browse';
+      if (state.uri.path == '/browse') return '/home';
+      if (state.uri.path == '/saved') return '/mypage';
+      final legacyDetail = RegExp(r'^/content/([^/]+)$').firstMatch(state.uri.path);
+      if (legacyDetail != null) {
+        return '/home/content/${legacyDetail.group(1)}';
+      }
       return null;
     },
     routes: [
@@ -45,13 +60,13 @@ final routerProvider = Provider<GoRouter>((ref) {
         builder: (context, state) => const UpgradeScreen(),
       ),
       GoRoute(
-        path: '/mypage',
-        builder: (context, state) => const ProfileScreen(),
+        path: '/downloads',
+        builder: (context, state) => const DownloadsScreen(),
       ),
       GoRoute(
-        path: '/content/:id',
-        builder: (context, state) => ContentDetailScreen(
-          contentId: state.pathParameters['id']!,
+        path: '/figure/:id',
+        builder: (context, state) => FigureContentsScreen(
+          figureId: state.pathParameters['id']!,
         ),
       ),
       GoRoute(
@@ -94,11 +109,12 @@ final routerProvider = Provider<GoRouter>((ref) {
             MainShell(navigationShell: navigationShell),
         branches: [
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorBrowseKey,
+            navigatorKey: _shellNavigatorHomeKey,
             routes: [
               GoRoute(
-                path: '/browse',
-                builder: (context, state) => MainShellBranch.browse(),
+                path: '/home',
+                builder: (context, state) => MainShellBranch.home(),
+                routes: [_contentDetailRoute()],
               ),
             ],
           ),
@@ -108,15 +124,17 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/search',
                 builder: (context, state) => MainShellBranch.search(),
+                routes: [_contentDetailRoute()],
               ),
             ],
           ),
           StatefulShellBranch(
-            navigatorKey: _shellNavigatorSavedKey,
+            navigatorKey: _shellNavigatorMypageKey,
             routes: [
               GoRoute(
-                path: '/saved',
-                builder: (context, state) => MainShellBranch.saved(),
+                path: '/mypage',
+                builder: (context, state) => MainShellBranch.mypage(),
+                routes: [_contentDetailRoute()],
               ),
             ],
           ),

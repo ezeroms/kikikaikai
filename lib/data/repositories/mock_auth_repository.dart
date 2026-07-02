@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:kikikaikai/core/models/app_user.dart';
 import 'package:kikikaikai/core/models/user_tier.dart';
+import 'package:kikikaikai/data/dummy/dummy_accounts.dart';
 import 'package:kikikaikai/data/repositories/auth_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -19,6 +20,7 @@ class MockAuthRepository implements AuthRepository {
       email: map['email'] as String,
       displayName: map['displayName'] as String,
       tier: UserTier.values.byName(map['tier'] as String),
+      avatarAsset: map['avatarAsset'] as String?,
     );
   }
 
@@ -35,6 +37,7 @@ class MockAuthRepository implements AuthRepository {
         'email': user.email,
         'displayName': user.displayName,
         'tier': user.tier.name,
+        if (user.avatarAsset != null) 'avatarAsset': user.avatarAsset,
       }),
     );
   }
@@ -44,14 +47,12 @@ class MockAuthRepository implements AuthRepository {
     required String email,
     required String password,
   }) async {
-    final user = AppUser(
-      id: 'user_${email.hashCode}',
-      email: email,
-      displayName: email.split('@').first,
-      tier: UserTier.member,
-    );
-    await _saveUser(user);
-    return user;
+    if (email == DummyAccounts.demoEmail &&
+        password == DummyAccounts.demoPassword) {
+      await _saveUser(DummyAccounts.demoUser);
+      return DummyAccounts.demoUser;
+    }
+    throw StateError('メールアドレスまたはパスワードが正しくありません');
   }
 
   @override

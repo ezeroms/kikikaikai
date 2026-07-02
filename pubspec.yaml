@@ -23,11 +23,14 @@ dependencies:
   rxdart: ^0.28.0
   intl: ^0.20.2
   flutter_lucide: ^1.11.0
+  sqflite: ^2.4.2
+  path: ^1.9.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  sqflite_common_ffi: ^2.3.5
 
 flutter:
   uses-material-design: true
@@ -35,8 +38,15 @@ flutter:
     - assets/branding/
     - assets/branding/pinpin/
     - assets/branding/eye_catch/
-    - assets/audio/
+    - assets/audio/radio_01.mp3
+    - assets/audio/radio_02.mp3
+    - assets/audio/radio_03.mp3
+    - assets/audio/radio_04.mp3
+    - assets/audio/radio_05.mp3
+    - assets/audio/radio_06.mp3
+    - assets/audio/radio_07.mp3
     - assets/video/
     - assets/banner/
+    - assets/bg/
     - assets/avatar/
     - assets/tab/

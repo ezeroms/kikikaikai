@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
@@ -15,18 +16,7 @@ class ProfileScreen extends ConsumerWidget {
 
     return Scaffold(
       appBar: AppBar(
-        title: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Image.asset(
-              'assets/branding/eye_catch/mypage.png',
-              width: 28,
-              height: 28,
-            ),
-            const SizedBox(width: 8),
-            const Text('自室'),
-          ],
-        ),
+        title: const Text('マイページ'),
       ),
       body: authAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
@@ -39,10 +29,12 @@ class ProfileScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 Center(
-                  child: Image.asset(
-                    'assets/branding/eye_catch/mypage.png',
-                    width: 96,
-                    height: 96,
+                  child: CircleAvatar(
+                    radius: 48,
+                    backgroundImage: AssetImage(
+                      user?.avatarAsset ??
+                          'assets/branding/eye_catch/mypage.png',
+                    ),
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -71,15 +63,39 @@ class ProfileScreen extends ConsumerWidget {
                     vertical: 8,
                   ),
                   decoration: BoxDecoration(
-                    border: Border.all(color: AppColors.mangoTango),
+                    border: Border.all(color: AppColors.primary),
                   ),
                   child: Text(
                     tier.label,
-                    style: AppTypography.label(color: AppColors.mangoTango),
+                    style: AppTypography.label(color: AppColors.primary),
                     textAlign: TextAlign.center,
                   ),
                 ),
                 const SizedBox(height: 32),
+                if (user != null) ...[
+                  Material(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                    clipBehavior: Clip.antiAlias,
+                    child: ListTile(
+                      leading: const Icon(
+                        LucideIcons.download,
+                        color: AppColors.secondary,
+                      ),
+                      title: Text(
+                        'ダウンロードしたコンテンツ',
+                        style: AppTypography.body(size: 15),
+                      ),
+                      trailing: const Icon(
+                        LucideIcons.chevron_right,
+                        color: AppColors.muted,
+                        size: 20,
+                      ),
+                      onTap: () => context.push('/downloads'),
+                    ),
+                  ),
+                  const SizedBox(height: 24),
+                ],
                 if (tier == UserTier.guest) ...[
                   ElevatedButton(
                     onPressed: () => context.push('/signup'),
@@ -100,17 +116,16 @@ class ProfileScreen extends ConsumerWidget {
                   OutlinedButton(
                     onPressed: () async {
                       await ref.read(authProvider.notifier).logout();
-                      if (context.mounted) context.go('/welcome');
                     },
                     child: const Text('ログアウト'),
                   ),
                 ],
                 const Spacer(),
                 Text(
-                  '品品団地の自室。ここから入居状態を管理できます。',
+                  '品品団地のマイページ。ここから入居状態を管理できます。',
                   style: AppTypography.body(
                     size: 13,
-                    color: AppColors.shuttleGray,
+                    color: AppColors.muted,
                   ),
                   textAlign: TextAlign.center,
                 ),

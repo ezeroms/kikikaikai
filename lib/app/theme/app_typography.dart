@@ -13,7 +13,7 @@ abstract final class AppTypography {
       GoogleFonts.notoSansJp(
         fontSize: size,
         fontWeight: weight,
-        color: color ?? AppColors.white,
+        color: color ?? AppColors.onBase,
         height: height,
         letterSpacing: letterSpacing,
       );
@@ -93,7 +93,7 @@ abstract final class AppTypography {
       _sans(
         size: size,
         weight: weight ?? FontWeight.w500,
-        color: color ?? AppColors.shuttleGray,
+        color: color ?? AppColors.muted,
         height: 1.35,
         letterSpacing: 0.1,
       );
@@ -102,7 +102,7 @@ abstract final class AppTypography {
   static TextStyle caption({double size = 11, Color? color}) => _sans(
         size: size,
         weight: FontWeight.w400,
-        color: color ?? AppColors.shuttleGray,
+        color: color ?? AppColors.muted,
         height: 1.3,
         letterSpacing: 0.05,
       );
@@ -111,7 +111,7 @@ abstract final class AppTypography {
   static TextStyle overline({Color? color}) => _sans(
         size: 10,
         weight: FontWeight.w600,
-        color: color ?? AppColors.mangoTango,
+        color: color ?? AppColors.primary,
         height: 1.2,
         letterSpacing: 0.6,
       );

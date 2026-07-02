@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:go_router/go_router.dart';
-import 'package:intl/intl.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
-import 'package:kikikaikai/core/models/access_level.dart';
+import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
-import 'package:kikikaikai/shared/widgets/paper_tape_heading.dart';
+import 'package:kikikaikai/shared/widgets/content_card.dart';
 import 'package:kikikaikai/shared/widgets/mini_player_bar.dart';
 
 class SearchScreen extends ConsumerStatefulWidget {
@@ -19,19 +17,64 @@ class SearchScreen extends ConsumerStatefulWidget {
 
 class _SearchScreenState extends ConsumerState<SearchScreen> {
   final _controller = TextEditingController();
+  final _focusNode = FocusNode();
   String _query = '';
+  bool _wasRouteCurrent = false;
 
   @override
   void dispose() {
     _controller.dispose();
+    _focusNode.dispose();
     super.dispose();
+  }
+
+  Future<void> _autoFocusIfHistoryEmpty() async {
+    if (_query.isNotEmpty) return;
+
+    final cached = ref.read(searchHistoryProvider).valueOrNull;
+    final history =
+        cached ?? await ref.read(searchHistoryProvider.future) ?? [];
+    if (!mounted || history.isNotEmpty) return;
+
+    _focusNode.requestFocus();
+  }
+
+  void _onRouteBecameCurrent() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _autoFocusIfHistoryEmpty();
+    });
+  }
+
+  Future<void> _performSearch(String raw) async {
+    final query = raw.trim();
+    setState(() {
+      _query = query;
+      _controller.text = query;
+    });
+    if (query.isEmpty) return;
+    await ref.read(searchHistoryProvider.notifier).addQuery(query);
+    _focusNode.unfocus();
+  }
+
+  List<Content> _filterContents(List<Content> contents, String query) {
+    final q = query.toLowerCase();
+    return contents.where((c) {
+      return c.title.toLowerCase().contains(q) ||
+          c.description.toLowerCase().contains(q) ||
+          c.type.label.contains(query);
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
     final contentsAsync = ref.watch(allContentsProvider);
-    final userTier = ref.watch(userTierProvider);
-    final dateFormat = DateFormat('yyyy.MM.dd');
+    final historyAsync = ref.watch(searchHistoryProvider);
+    final isRouteCurrent = ModalRoute.of(context)?.isCurrent ?? true;
+
+    if (isRouteCurrent && !_wasRouteCurrent) {
+      _onRouteBecameCurrent();
+    }
+    _wasRouteCurrent = isRouteCurrent;
 
     return Scaffold(
       appBar: AppBar(title: const Text('検索')),
@@ -41,119 +84,181 @@ class _SearchScreenState extends ConsumerState<SearchScreen> {
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
             child: TextField(
               controller: _controller,
+              focusNode: _focusNode,
+              cursorColor: AppColors.onBase,
+              textInputAction: TextInputAction.search,
               decoration: InputDecoration(
                 hintText: 'タイトル・説明で検索',
                 prefixIcon: const Icon(LucideIcons.search),
+                prefixIconColor: WidgetStateColor.resolveWith((states) {
+                  if (states.contains(WidgetState.focused)) {
+                    return AppColors.onBase;
+                  }
+                  return AppColors.muted;
+                }),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(10),
+                  borderSide: const BorderSide(
+                    color: AppColors.onBase,
+                    width: 1.5,
+                  ),
+                ),
+                suffixIcon: _query.isNotEmpty
+                    ? IconButton(
+                        onPressed: () {
+                          _controller.clear();
+                          setState(() => _query = '');
+                          _autoFocusIfHistoryEmpty();
+                        },
+                        icon: const Icon(LucideIcons.x),
+                      )
+                    : null,
               ),
-              onChanged: (value) => setState(() => _query = value.trim()),
+              onChanged: (value) {
+                if (value.trim().isEmpty) {
+                  setState(() => _query = '');
+                }
+              },
+              onSubmitted: _performSearch,
             ),
           ),
           Expanded(
-            child: contentsAsync.when(
-              loading: () => const Center(child: CircularProgressIndicator()),
-              error: (e, _) => Center(child: Text('読み込みエラー: $e')),
-              data: (contents) {
-                final filtered = _query.isEmpty
-                    ? contents
-                    : contents.where((c) {
-                        final q = _query.toLowerCase();
-                        return c.title.toLowerCase().contains(q) ||
-                            c.description.toLowerCase().contains(q) ||
-                            c.type.label.contains(_query);
-                      }).toList();
+            child: _query.isEmpty
+                ? _SearchHistoryPanel(
+                    historyAsync: historyAsync,
+                    onSelect: _performSearch,
+                    onRemove: (query) {
+                      ref
+                          .read(searchHistoryProvider.notifier)
+                          .removeQuery(query);
+                    },
+                    onClearAll: () async {
+                      await ref
+                          .read(searchHistoryProvider.notifier)
+                          .clearAll();
+                      if (mounted) await _autoFocusIfHistoryEmpty();
+                    },
+                  )
+                : contentsAsync.when(
+                    loading: () =>
+                        const Center(child: CircularProgressIndicator()),
+                    error: (e, _) => Center(child: Text('読み込みエラー: $e')),
+                    data: (contents) {
+                      final filtered = _filterContents(contents, _query);
 
-                if (filtered.isEmpty) {
-                  return Center(
-                    child: Text(
-                      _query.isEmpty
-                          ? 'キーワードを入力してください'
-                          : '「$_query」に一致するコンテンツがありません',
-                      style: AppTypography.body(color: AppColors.shuttleGray),
-                      textAlign: TextAlign.center,
-                    ),
-                  );
-                }
+                      if (filtered.isEmpty) {
+                        return Center(
+                          child: Text(
+                            '「$_query」に一致するコンテンツがありません',
+                            style: AppTypography.body(color: AppColors.muted),
+                            textAlign: TextAlign.center,
+                          ),
+                        );
+                      }
 
-                return ListView.builder(
-                  padding: EdgeInsets.fromLTRB(
-                    16,
-                    0,
-                    16,
-                    16 + miniPlayerScrollPadding(context),
+                      return ListView.separated(
+                        padding: EdgeInsets.fromLTRB(
+                          16,
+                          0,
+                          16,
+                          16 + miniPlayerScrollPadding(context),
+                        ),
+                        itemCount: filtered.length,
+                        separatorBuilder: (_, _) => const SizedBox(height: 24),
+                        itemBuilder: (context, index) {
+                          return ContentCard(content: filtered[index]);
+                        },
+                      );
+                    },
                   ),
-                  itemCount: filtered.length,
-                  itemBuilder: (context, index) {
-                    final content = filtered[index];
-                    final locked = !userTier.canAccess(content.accessLevel);
-                    return InkWell(
-                      onTap: () => context.push('/content/${content.id}'),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          PaperTapeHeading(
-                            title: content.title,
-                            date: dateFormat.format(content.publishedAt),
-                            isOdd: index.isOdd,
-                          ),
-                          Padding(
-                            padding: const EdgeInsets.only(left: 8, bottom: 8),
-                            child: Row(
-                              children: [
-                                Text(
-                                  content.type.label,
-                                  style: AppTypography.label(
-                                    size: 11,
-                                    color: AppColors.mangoTango,
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                Expanded(
-                                  child: Text(
-                                    content.description,
-                                    style: AppTypography.body(
-                                      size: 13,
-                                      color: AppColors.shuttleGray,
-                                    ),
-                                    maxLines: 1,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                                if (locked)
-                                  const Icon(
-                                    Icons.lock_outline,
-                                    size: 16,
-                                    color: AppColors.mangoTango,
-                                  ),
-                                if (content.accessLevel != AccessLevel.public)
-                                  Container(
-                                    margin: const EdgeInsets.only(left: 8),
-                                    padding: const EdgeInsets.symmetric(
-                                      horizontal: 6,
-                                      vertical: 2,
-                                    ),
-                                    decoration: BoxDecoration(
-                                      border: Border.all(
-                                        color: AppColors.riverRoad,
-                                      ),
-                                    ),
-                                    child: Text(
-                                      content.accessLevel.label,
-                                      style: AppTypography.label(size: 10),
-                                    ),
-                                  ),
-                              ],
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
           ),
         ],
       ),
+    );
+  }
+}
+
+class _SearchHistoryPanel extends StatelessWidget {
+  const _SearchHistoryPanel({
+    required this.historyAsync,
+    required this.onSelect,
+    required this.onRemove,
+    required this.onClearAll,
+  });
+
+  final AsyncValue<List<String>> historyAsync;
+  final ValueChanged<String> onSelect;
+  final ValueChanged<String> onRemove;
+  final VoidCallback onClearAll;
+
+  @override
+  Widget build(BuildContext context) {
+    return historyAsync.when(
+      loading: () => const Center(child: CircularProgressIndicator()),
+      error: (e, _) => Center(child: Text('読み込みエラー: $e')),
+      data: (history) {
+        if (history.isEmpty) {
+          return const SizedBox.shrink();
+        }
+
+        return ListView(
+          padding: EdgeInsets.fromLTRB(
+            8,
+            0,
+            8,
+            16 + miniPlayerScrollPadding(context),
+          ),
+          children: [
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 0, 8, 8),
+              child: Row(
+                children: [
+                  Text(
+                    '検索履歴',
+                    style: AppTypography.label(
+                      size: 13,
+                      color: AppColors.muted,
+                    ),
+                  ),
+                  const Spacer(),
+                  TextButton(
+                    onPressed: onClearAll,
+                    child: Text(
+                      'すべて削除',
+                      style: AppTypography.label(size: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            ...history.map(
+              (query) => ListTile(
+                leading: const Icon(
+                  LucideIcons.history,
+                  color: AppColors.muted,
+                  size: 20,
+                ),
+                title: Text(
+                  query,
+                  style: AppTypography.body(size: 15),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                trailing: IconButton(
+                  icon: const Icon(
+                    LucideIcons.x,
+                    size: 18,
+                    color: AppColors.muted,
+                  ),
+                  onPressed: () => onRemove(query),
+                  tooltip: '削除',
+                ),
+                onTap: () => onSelect(query),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }

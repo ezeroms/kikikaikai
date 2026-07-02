@@ -30,11 +30,16 @@ class MediaPlayback {
   static Future<void> playContent(
     Content content, {
     Duration? previewLimit,
+    Duration? startPosition,
   }) async {
     await init();
     final h = handler;
     if (h == null) return;
-    await h.playContent(content, previewLimit: previewLimit);
+    await h.playContent(
+      content,
+      previewLimit: previewLimit,
+      startPosition: startPosition,
+    );
   }
 
   static Future<void> stop() async {

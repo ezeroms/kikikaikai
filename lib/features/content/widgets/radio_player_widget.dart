@@ -4,8 +4,12 @@ import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
+import 'package:kikikaikai/core/media/content_playback_progress_resolver.dart';
+import 'package:kikikaikai/core/media/format_media_duration.dart';
 import 'package:kikikaikai/core/media/media_playback.dart';
 import 'package:kikikaikai/core/models/content.dart';
+import 'package:kikikaikai/core/providers/providers.dart';
+import 'package:kikikaikai/shared/widgets/circular_media_button.dart';
 
 class RadioPlayerWidget extends ConsumerStatefulWidget {
   const RadioPlayerWidget({
@@ -27,17 +31,18 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
   }
 
   Future<void> _startPlayback() async {
+    final savedProgress = ref
+        .read(contentEngagementProvider)
+        .valueOrNull
+        ?.playbackFor(widget.content.id);
     await MediaPlayback.playContent(
       widget.content,
       previewLimit: widget.previewLimit,
+      startPosition: ContentPlaybackProgressResolver.resumePosition(
+        savedProgress,
+      ),
     );
     if (mounted) setState(() {});
-  }
-
-  String _formatDuration(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
   }
 
   @override
@@ -49,9 +54,9 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
       margin: const EdgeInsets.symmetric(vertical: 16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.cardSurface,
+        color: AppColors.surface,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.cardBorder),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -90,18 +95,9 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
           const SizedBox(height: 16),
           if (!isActive)
             Center(
-              child: FilledButton.icon(
+              child: CircularMediaButton.overlay(
                 onPressed: _startPlayback,
-                style: FilledButton.styleFrom(
-                  backgroundColor: AppColors.mangoTango,
-                  foregroundColor: AppColors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 28,
-                    vertical: 14,
-                  ),
-                ),
-                icon: const Icon(LucideIcons.play, size: 20),
-                label: const Text('再生する'),
+                size: 64,
               ),
             )
           else if (handler != null)
@@ -111,7 +107,7 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                 if (previewExpired) {
                   return Text(
                     'プレビューは30秒までです',
-                    style: AppTypography.label(color: AppColors.mangoTango),
+                    style: AppTypography.label(color: AppColors.primary),
                   );
                 }
                 return StreamBuilder<PlaybackState>(
@@ -143,18 +139,18 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                                       );
                                     }
                                   : null,
-                              activeColor: AppColors.mangoTango,
-                              inactiveColor: AppColors.shuttleGray,
+                              activeColor: AppColors.primary,
+                              inactiveColor: AppColors.muted,
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  _formatDuration(position),
+                                  formatMediaDuration(position),
                                   style: AppTypography.caption(size: 11),
                                 ),
                                 Text(
-                                  _formatDuration(total),
+                                  formatMediaDuration(total),
                                   style: AppTypography.caption(size: 11),
                                 ),
                               ],
@@ -170,11 +166,11 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                                   ),
                                   icon: const Icon(
                                     LucideIcons.rotate_ccw,
-                                    color: AppColors.summerWood,
+                                    color: AppColors.secondary,
                                   ),
                                 ),
-                                IconButton(
-                                  iconSize: 52,
+                                CircularMediaButton.control(
+                                  playing: playing,
                                   onPressed: () {
                                     if (playing) {
                                       handler.pause();
@@ -182,12 +178,6 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                                       handler.play();
                                     }
                                   },
-                                  icon: Icon(
-                                    playing
-                                        ? LucideIcons.pause
-                                        : LucideIcons.play,
-                                    color: AppColors.mangoTango,
-                                  ),
                                 ),
                                 IconButton(
                                   iconSize: 36,
@@ -196,7 +186,7 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
                                   ),
                                   icon: const Icon(
                                     LucideIcons.rotate_cw,
-                                    color: AppColors.summerWood,
+                                    color: AppColors.secondary,
                                   ),
                                 ),
                               ],
@@ -215,7 +205,7 @@ class _RadioPlayerWidgetState extends ConsumerState<RadioPlayerWidget> {
               'バックグラウンド再生に対応しています',
               style: AppTypography.label(
                 size: 10,
-                color: AppColors.shuttleGray,
+                color: AppColors.muted,
               ),
             ),
           ],

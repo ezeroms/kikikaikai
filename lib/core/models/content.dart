@@ -8,12 +8,13 @@ class Content {
     required this.accessLevel,
     required this.title,
     required this.description,
-    required this.authorId,
+    required this.figureIds,
     required this.publishedAt,
     this.thumbnailAsset,
     this.mediaUrl,
     this.bodyMarkdown,
     this.previewDuration = const Duration(seconds: 30),
+    this.mediaDuration,
     this.externalUrl,
     this.cardSubtitle,
   });
@@ -23,16 +24,22 @@ class Content {
   final AccessLevel accessLevel;
   final String title;
   final String description;
-  final String authorId;
+  final List<String> figureIds;
   final DateTime publishedAt;
   final String? thumbnailAsset;
   final String? mediaUrl;
   final String? bodyMarkdown;
   final Duration previewDuration;
+  final Duration? mediaDuration;
   final String? externalUrl;
 
   /// カード上にタイトル下へ表示するサブテキスト（null ならタイトルのみ）
   final String? cardSubtitle;
 
   String get displayThumbnail => thumbnailAsset ?? type.iconAsset;
+
+  /// 音声の総尺（カード表示用。未設定時はサンプル既定値）
+  Duration? get playbackDuration =>
+      mediaDuration ??
+      (type.isAudioPlayback ? const Duration(minutes: 42) : null);
 }

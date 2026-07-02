@@ -65,7 +65,7 @@ class _MiniPlayerHostState extends State<MiniPlayerHost> {
           left: 0,
           right: 0,
           bottom: miniPlayerOverlayBottom(_path, context),
-          child: MiniPlayerBar(currentPath: _path),
+          child: MiniPlayerBar(currentPath: _path, router: widget.router),
         ),
       ],
     );

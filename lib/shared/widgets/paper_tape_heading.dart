@@ -16,7 +16,7 @@ class PaperTapeHeading extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bgColor = isOdd ? AppColors.summerWood : AppColors.riverRoad;
+    final bgColor = isOdd ? AppColors.secondary : AppColors.tertiary;
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       child: Transform.rotate(
@@ -40,7 +40,7 @@ class PaperTapeHeading extends StatelessWidget {
                   title,
                   style: AppTypography.titleSmall(
                     size: 15,
-                    color: AppColors.black,
+                    color: AppColors.base,
                   ),
                 ),
               ),
@@ -49,7 +49,7 @@ class PaperTapeHeading extends StatelessWidget {
                   date!,
                   style: AppTypography.caption(
                     size: 12,
-                    color: AppColors.black.withValues(alpha: 0.65),
+                    color: AppColors.base.withValues(alpha: 0.65),
                   ),
                 ),
             ],

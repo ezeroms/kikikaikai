@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kikikaikai/app/router.dart';
 import 'package:kikikaikai/app/theme/app_theme.dart';
+import 'package:kikikaikai/core/media/playback_engagement_listener.dart';
 import 'package:kikikaikai/shared/widgets/mini_player_host.dart';
 
 class KikikaikaiApp extends ConsumerWidget {
@@ -16,7 +17,9 @@ class KikikaikaiApp extends ConsumerWidget {
       routerConfig: router,
       debugShowCheckedModeBanner: false,
       builder: (context, child) {
-        return MiniPlayerHost(router: router, child: child);
+        return PlaybackEngagementListener(
+          child: MiniPlayerHost(router: router, child: child),
+        );
       },
     );
   }

@@ -3,23 +3,31 @@ import 'package:flutter/services.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
+import 'package:kikikaikai/core/media/format_media_duration.dart';
 import 'package:kikikaikai/core/media/media_playback.dart';
+import 'package:kikikaikai/shared/widgets/circular_media_button.dart';
 import 'package:video_player/video_player.dart';
 
 Future<void> openFullscreenVideo(
   BuildContext context, {
   required VideoPlayerController controller,
   required String title,
-}) {
-  return Navigator.of(context).push(
-    MaterialPageRoute<void>(
-      fullscreenDialog: true,
-      builder: (context) => FullscreenVideoPage(
-        controller: controller,
-        title: title,
+}) async {
+  final handler = MediaPlayback.handler;
+  handler?.fullscreenVideoNotifier.value = true;
+  try {
+    await Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        fullscreenDialog: true,
+        builder: (context) => FullscreenVideoPage(
+          controller: controller,
+          title: title,
+        ),
       ),
-    ),
-  );
+    );
+  } finally {
+    handler?.fullscreenVideoNotifier.value = false;
+  }
 }
 
 class FullscreenVideoPage extends StatefulWidget {
@@ -63,12 +71,6 @@ class _FullscreenVideoPageState extends State<FullscreenVideoPage> {
     if (mounted) setState(() {});
   }
 
-  String _formatDuration(Duration d) {
-    final m = d.inMinutes.remainder(60).toString().padLeft(2, '0');
-    final s = d.inSeconds.remainder(60).toString().padLeft(2, '0');
-    return '$m:$s';
-  }
-
   @override
   Widget build(BuildContext context) {
     final handler = MediaPlayback.handler;
@@ -93,7 +95,7 @@ class _FullscreenVideoPageState extends State<FullscreenVideoPage> {
                       child: VideoPlayer(widget.controller),
                     )
                   : const CircularProgressIndicator(
-                      color: AppColors.mangoTango,
+                      color: AppColors.primary,
                     ),
             ),
             AnimatedOpacity(
@@ -152,18 +154,18 @@ class _FullscreenVideoPageState extends State<FullscreenVideoPage> {
                                       );
                                     }
                                   : null,
-                              activeColor: AppColors.mangoTango,
-                              inactiveColor: AppColors.shuttleGray,
+                              activeColor: AppColors.primary,
+                              inactiveColor: AppColors.muted,
                             ),
                             Row(
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 Text(
-                                  _formatDuration(position),
+                                  formatMediaDuration(position),
                                   style: AppTypography.label(size: 11),
                                 ),
                                 Text(
-                                  _formatDuration(total),
+                                  formatMediaDuration(total),
                                   style: AppTypography.label(size: 11),
                                 ),
                               ],
@@ -178,11 +180,12 @@ class _FullscreenVideoPageState extends State<FullscreenVideoPage> {
                                   ),
                                   icon: const Icon(
                                     LucideIcons.rotate_ccw,
-                                    color: AppColors.summerWood,
+                                    color: AppColors.secondary,
                                   ),
                                 ),
-                                IconButton(
-                                  iconSize: 52,
+                                CircularMediaButton.control(
+                                  playing: value.isPlaying,
+                                  size: 56,
                                   onPressed: () {
                                     if (value.isPlaying) {
                                       handler?.pause();
@@ -190,12 +193,6 @@ class _FullscreenVideoPageState extends State<FullscreenVideoPage> {
                                       handler?.play();
                                     }
                                   },
-                                  icon: Icon(
-                                    value.isPlaying
-                                        ? LucideIcons.pause
-                                        : LucideIcons.play,
-                                    color: AppColors.mangoTango,
-                                  ),
                                 ),
                                 IconButton(
                                   iconSize: 36,
@@ -204,7 +201,7 @@ class _FullscreenVideoPageState extends State<FullscreenVideoPage> {
                                   ),
                                   icon: const Icon(
                                     LucideIcons.rotate_cw,
-                                    color: AppColors.summerWood,
+                                    color: AppColors.secondary,
                                   ),
                                 ),
                               ],
@@ -230,19 +227,37 @@ class InlineVideoPlayer extends StatelessWidget {
     super.key,
     required this.controller,
     required this.title,
+    this.onVideoTap,
   });
 
   final VideoPlayerController controller;
   final String title;
+  final VoidCallback? onVideoTap;
+
+  void _openFullscreen(BuildContext context) {
+    if (onVideoTap != null) {
+      onVideoTap!();
+      return;
+    }
+    openFullscreenVideo(
+      context,
+      controller: controller,
+      title: title,
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Stack(
       alignment: Alignment.bottomRight,
       children: [
-        AspectRatio(
-          aspectRatio: controller.value.aspectRatio,
-          child: VideoPlayer(controller),
+        GestureDetector(
+          onTap: () => _openFullscreen(context),
+          behavior: HitTestBehavior.opaque,
+          child: AspectRatio(
+            aspectRatio: controller.value.aspectRatio,
+            child: VideoPlayer(controller),
+          ),
         ),
         Padding(
           padding: const EdgeInsets.all(8),
@@ -250,11 +265,7 @@ class InlineVideoPlayer extends StatelessWidget {
             color: Colors.black54,
             borderRadius: BorderRadius.circular(6),
             child: InkWell(
-              onTap: () => openFullscreenVideo(
-                context,
-                controller: controller,
-                title: title,
-              ),
+              onTap: () => _openFullscreen(context),
               borderRadius: BorderRadius.circular(6),
               child: const Padding(
                 padding: EdgeInsets.all(8),

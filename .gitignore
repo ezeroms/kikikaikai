@@ -43,3 +43,11 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Large local media (not tracked in git)
+/assets/video/
+/assets/audio/radio_03.mp3
+/assets/audio/radio_04.mp3
+/assets/audio/radio_05.mp3
+/assets/audio/radio_06.mp3
+/assets/audio/radio_07.mp3
