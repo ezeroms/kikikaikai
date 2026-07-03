@@ -11,7 +11,7 @@ class AppDatabase {
   Database get raw => _db;
 
   static const _dbName = 'kikikaikai.db';
-  static const _schemaVersion = 4;
+  static const _schemaVersion = 5;
 
   static Future<AppDatabase> open({bool inMemory = false}) async {
     final db = await openDatabase(
@@ -50,7 +50,8 @@ class AppDatabase {
         media_duration_ms INTEGER,
         external_url TEXT,
         card_subtitle TEXT,
-        transcript TEXT
+        transcript TEXT,
+        media_format TEXT
       )
     ''');
 
@@ -116,14 +117,32 @@ class AppDatabase {
       await _createMetaTable(db);
     }
     if (oldVersion < 3) {
-      await db.execute('ALTER TABLE contents ADD COLUMN transcript TEXT');
+      if (!await _hasColumn(db, 'contents', 'transcript')) {
+        await db.execute('ALTER TABLE contents ADD COLUMN transcript TEXT');
+      }
       await _createContentCommentsTable(db);
     }
     if (oldVersion < 4) {
-      await db.execute(
-        'ALTER TABLE content_comments ADD COLUMN author_avatar_asset TEXT',
-      );
+      if (!await _hasColumn(db, 'content_comments', 'author_avatar_asset')) {
+        await db.execute(
+          'ALTER TABLE content_comments ADD COLUMN author_avatar_asset TEXT',
+        );
+      }
     }
+    if (oldVersion < 5) {
+      if (!await _hasColumn(db, 'contents', 'media_format')) {
+        await db.execute('ALTER TABLE contents ADD COLUMN media_format TEXT');
+      }
+    }
+  }
+
+  static Future<bool> _hasColumn(
+    Database db,
+    String table,
+    String column,
+  ) async {
+    final rows = await db.rawQuery('PRAGMA table_info($table)');
+    return rows.any((row) => row['name'] == column);
   }
 
   Future<void> close() => _db.close();

@@ -6,6 +6,7 @@ import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
 import 'package:kikikaikai/data/repositories/mock_content_repository.dart';
 import 'package:kikikaikai/features/home/widgets/category_profile_header.dart';
+import 'package:kikikaikai/features/home/widgets/home_tab_scroll.dart';
 import 'package:kikikaikai/shared/widgets/compact_category_content_card.dart';
 
 void main() {
@@ -54,44 +55,19 @@ class _CategoryStackHarness extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const overlap = CategoryProfileHeader.contentOverlap;
-    final headerHeight = MediaQuery.sizeOf(context).width;
-
-    final listContent = Column(
-      mainAxisSize: MainAxisSize.min,
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
+    return buildHomeCategoryTabScroll(
+      context,
+      imageAsset: 'assets/bg/kikikaikai.png',
+      injectNestedScrollOverlap: false,
+      header: const CategoryProfileScrollHeader(
+        title: '奇奇怪怪',
+        description: 'テスト',
+      ),
+      contentCards: [
         for (var i = 0; i < contents.length; i++) ...[
           if (i > 0) const SizedBox(height: 16),
           CompactCategoryContentCard(content: contents[i]),
         ],
-      ],
-    );
-
-    return CustomScrollView(
-      clipBehavior: Clip.none,
-      slivers: [
-        SliverToBoxAdapter(
-          child: Stack(
-            clipBehavior: Clip.none,
-            children: [
-              CategoryProfileHeader(
-                title: '奇奇怪怪',
-                description: 'テスト',
-                imageAsset: 'assets/bg/kikikaikai.png',
-              ),
-              Padding(
-                padding: EdgeInsets.only(
-                  top: headerHeight - overlap,
-                  left: 24,
-                  right: 24,
-                  bottom: 32,
-                ),
-                child: listContent,
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }

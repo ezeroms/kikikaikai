@@ -28,6 +28,9 @@ class FeaturedContentCard extends ConsumerWidget {
     final canAccess = userTier.canAccess(content.accessLevel);
     final canPlay = ContentCardPlayback.isPlayable(content, userTier);
 
+    final subtitle = content.cardSubtitle?.trim();
+    final hasSubtitle = subtitle != null && subtitle.isNotEmpty;
+
     return SizedBox(
       height: carouselHeight,
       child: Material(
@@ -68,23 +71,24 @@ class FeaturedContentCard extends ConsumerWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      ContentCardTextBlock(
-                        title: content.title,
-                        subtitle: content.description,
-                        titleStyle: AppTypography.title(
-                          size: 20,
-                          weight: FontWeight.w600,
+                      Expanded(
+                        child: ContentCardTextBlock(
+                          title: content.title,
+                          subtitle: hasSubtitle ? subtitle : null,
+                          titleStyle: AppTypography.title(
+                            size: 20,
+                            weight: FontWeight.w600,
+                          ),
+                          subtitleStyle: AppTypography.body(
+                            size: 14,
+                            color: AppColors.muted,
+                            weight: FontWeight.w400,
+                          ),
+                          subtitleMaxLines: 2,
+                          textAlign: TextAlign.center,
+                          titleSubtitleGap: 8,
                         ),
-                        subtitleStyle: AppTypography.body(
-                          size: 14,
-                          color: AppColors.muted,
-                          weight: FontWeight.w400,
-                        ),
-                        subtitleMaxLines: 2,
-                        textAlign: TextAlign.center,
-                        titleSubtitleGap: 8,
                       ),
-                      const Spacer(),
                       figuresAsync.when(
                         loading: () => const SizedBox(height: 28),
                         error: (_, _) => const SizedBox.shrink(),

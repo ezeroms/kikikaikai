@@ -21,7 +21,16 @@ abstract final class ContentNavigation {
       router.push('/mypage/content/$contentId');
       return;
     }
+    final figureId = figureIdFromPath(currentPath);
+    if (figureId != null) {
+      router.push('/home/figure/$figureId/content/$contentId');
+      return;
+    }
     router.push('/home/content/$contentId');
+  }
+
+  static String? figureIdFromPath(String path) {
+    return RegExp(r'/figure/([^/]+)').firstMatch(path)?.group(1);
   }
 
   static bool isContentDetailPath(String path) {

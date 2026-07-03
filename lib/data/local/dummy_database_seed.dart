@@ -10,7 +10,7 @@ import 'package:sqflite/sqflite.dart';
 /// ダミーカタログを SQLite へ投入・同期する。
 abstract final class DummyDatabaseSeed {
   /// `dummy_contents.dart` / `dummy_figures.dart` を更新したら increment する。
-  static const catalogRevision = 7;
+  static const catalogRevision = 13;
 
   /// 起動時および [LocalContentRepository] 読み取り前に upsert する。
   static Future<void> syncCatalog(Database db) async {

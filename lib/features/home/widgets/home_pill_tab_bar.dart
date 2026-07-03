@@ -18,9 +18,12 @@ class HomePillTabBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height,
-      child: TabBar(
+    return Material(
+      color: AppColors.base,
+      surfaceTintColor: Colors.transparent,
+      child: SizedBox(
+        height: height,
+        child: TabBar(
         controller: controller,
         isScrollable: true,
         tabAlignment: TabAlignment.start,
@@ -46,6 +49,7 @@ class HomePillTabBar extends StatelessWidget {
         tabs: [
           for (final tab in HomeTab.values) Tab(text: tab.label),
         ],
+        ),
       ),
     );
   }

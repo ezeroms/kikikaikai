@@ -9,9 +9,11 @@ import 'package:kikikaikai/shared/widgets/figure_meta_row.dart';
 import 'package:kikikaikai/shared/widgets/content_card_text_block.dart';
 import 'package:kikikaikai/core/media/content_card_playback.dart';
 import 'package:kikikaikai/core/models/content.dart';
+import 'package:kikikaikai/core/models/content_type.dart';
 import 'package:kikikaikai/core/models/figure.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
 import 'package:kikikaikai/shared/widgets/content_card_play_button.dart';
+import 'package:kikikaikai/shared/widgets/glass_card.dart';
 
 class ContentCard extends ConsumerWidget {
   const ContentCard({
@@ -20,12 +22,18 @@ class ContentCard extends ConsumerWidget {
     this.width,
     this.height,
     this.showPlayButton = true,
+    this.showDate = true,
+    this.glassBackground = true,
   });
 
   final Content content;
   final double? width;
   final double? height;
   final bool showPlayButton;
+  final bool showDate;
+
+  /// false のときはホーム向けの従来の [AppColors.surface] 背景
+  final bool glassBackground;
 
   static const _radius = 12.0;
 
@@ -42,50 +50,61 @@ class ContentCard extends ConsumerWidget {
       figuresAsync: figuresAsync,
       showsPlayButton: showsPlayButton,
       expandText: height != null,
+      showDate: showDate,
     );
 
-    final card = Material(
-      color: AppColors.surface,
-      elevation: 2,
-      shadowColor: Colors.black.withValues(alpha: 0.4),
-      borderRadius: BorderRadius.circular(_radius),
-      clipBehavior: Clip.antiAlias,
-      child: InkWell(
-        onTap: () => ContentNavigation.openDetail(context, content.id),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            AspectRatio(
-              aspectRatio: 16 / 9,
-              child: Stack(
-                fit: StackFit.expand,
-                children: [
-                  Image.asset(
-                    content.displayThumbnail,
-                    fit: BoxFit.cover,
-                  ),
-                  if (!canAccess && !canPlay)
-                    ColoredBox(
-                      color: Colors.black.withValues(alpha: 0.45),
-                      child: const Center(
-                        child: Icon(
-                          LucideIcons.lock,
-                          color: AppColors.secondary,
-                          size: 28,
-                        ),
+    final cardBody = InkWell(
+      onTap: () => ContentNavigation.openDetail(context, content.id),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          AspectRatio(
+            aspectRatio: 16 / 9,
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                Image.asset(
+                  content.displayThumbnail,
+                  fit: BoxFit.cover,
+                ),
+                if (!canAccess && !canPlay)
+                  ColoredBox(
+                    color: Colors.black.withValues(alpha: 0.45),
+                    child: const Center(
+                      child: Icon(
+                        LucideIcons.lock,
+                        color: AppColors.secondary,
+                        size: 28,
                       ),
                     ),
-                ],
-              ),
+                  ),
+              ],
             ),
-            if (height != null)
-              Expanded(child: details)
-            else
-              details,
-          ],
-        ),
+          ),
+          if (height != null)
+            Expanded(child: details)
+          else
+            details,
+        ],
       ),
     );
+
+    final card = glassBackground
+        ? GlassCardSurface(
+            borderRadius: _radius,
+            child: Material(
+              color: Colors.transparent,
+              child: cardBody,
+            ),
+          )
+        : Material(
+            color: AppColors.surface,
+            elevation: 2,
+            shadowColor: Colors.black.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(_radius),
+            clipBehavior: Clip.antiAlias,
+            child: cardBody,
+          );
 
     if (width != null || height != null) {
       return SizedBox(width: width, height: height, child: card);
@@ -100,12 +119,14 @@ class _ContentCardDetails extends StatelessWidget {
     required this.figuresAsync,
     required this.showsPlayButton,
     required this.expandText,
+    required this.showDate,
   });
 
   final Content content;
   final AsyncValue<List<Figure>> figuresAsync;
   final bool showsPlayButton;
   final bool expandText;
+  final bool showDate;
 
   @override
   Widget build(BuildContext context) {
@@ -133,11 +154,15 @@ class _ContentCardDetails extends StatelessWidget {
       loading: () => const SizedBox(height: 22),
       error: (_, _) => const SizedBox.shrink(),
       data: (figures) {
+        final isVideo = content.type == ContentType.video;
+        final dateLabel = formatContentDate(content.publishedAt);
         return FigureMetaRow(
           figures: figures,
-          dateLabel: formatContentDate(content.publishedAt),
-          metaFontSize: 14,
-          nameStyle: AppTypography.titleSmall(size: 14).copyWith(
+          dateLabel: dateLabel,
+          showDate: showDate,
+          avatarRadius: isVideo ? 10 : 12,
+          metaFontSize: isVideo ? 12 : 14,
+          nameStyle: AppTypography.titleSmall(size: isVideo ? 12 : 14).copyWith(
             fontWeight: FontWeight.w400,
           ),
           accessLabel: content.accessLevel.cardBadgeLabel,

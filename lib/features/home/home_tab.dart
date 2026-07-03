@@ -40,10 +40,14 @@ enum HomeTab {
   /// カテゴリタブ上部プロフィール用説明文
   String get profileDescription => switch (this) {
         HomeTab.home => '',
-        HomeTab.kikikaikai => 'ポップカルチャーと団地の夜を、TaiTan と玉置が語るポッドキャスト。',
-        HomeTab.bulletin => '週3回更新。団地の出来事や設計図、基本乱文御免。',
-        HomeTab.radio => '団地ラジオ。エレベーター点検の裏側から、闇市の夜まで。',
-        HomeTab.tv => '街頭テレビ。路上から届くインタビューと記録。',
-        HomeTab.manuscript => '玉置玉稿。団地の階段と都市伝説をめぐるエッセイ。',
+        HomeTab.kikikaikai => 'ガンダーラを漂う耳の旅',
+        HomeTab.bulletin =>
+          '日々を薄く支配する言葉を起点に、タイタンの仮説を記録する。週3回更新。だから基本乱文御免。',
+        HomeTab.radio =>
+          'タイタンが今話したい人を呼んで、適切な雑談をする場。濃い場合が多い。団地なのでジャンルレスで面白い人が集まる。団地なのだから。割と定期的に更新される予定。',
+        HomeTab.tv =>
+          'タイタン/玉置/カンベの旅を映像で記録したりする。やがて専用車を買って、全国行脚するのが野望。JEEPがいい。',
+        HomeTab.manuscript =>
+          '玉置周啓の珠玉の善玉の玉に瑕な玉稿エッセイ集。週1回更新。玉稿。',
       };
 }

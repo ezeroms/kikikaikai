@@ -2,9 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
+import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
+import 'package:kikikaikai/features/figure/widgets/figure_contents_scroll.dart';
+import 'package:kikikaikai/features/home/home_feed.dart';
+import 'package:kikikaikai/shared/widgets/compact_category_content_card.dart';
 import 'package:kikikaikai/shared/widgets/content_card.dart';
-import 'package:kikikaikai/shared/widgets/mini_player_bar.dart';
 
 /// Figure にタグ付けされたコンテンツ一覧
 class FigureContentsScreen extends ConsumerWidget {
@@ -19,16 +22,19 @@ class FigureContentsScreen extends ConsumerWidget {
 
     return figureAsync.when(
       loading: () => const Scaffold(
+        backgroundColor: AppColors.base,
         body: Center(child: CircularProgressIndicator()),
       ),
       error: (e, _) => Scaffold(
-        appBar: AppBar(),
+        backgroundColor: AppColors.base,
+        appBar: AppBar(backgroundColor: AppColors.base),
         body: Center(child: Text('読み込みエラー: $e')),
       ),
       data: (figure) {
         if (figure == null) {
           return Scaffold(
-            appBar: AppBar(),
+            backgroundColor: AppColors.base,
+            appBar: AppBar(backgroundColor: AppColors.base),
             body: Center(
               child: Text(
                 '人物が見つかりません',
@@ -39,37 +45,50 @@ class FigureContentsScreen extends ConsumerWidget {
         }
 
         return Scaffold(
+          backgroundColor: AppColors.base,
           appBar: AppBar(
-            title: Text('${figure.name} に関係するコンテンツ'),
+            backgroundColor: AppColors.base,
+            elevation: 0,
+            scrolledUnderElevation: 0,
+            surfaceTintColor: Colors.transparent,
           ),
           body: contentsAsync.when(
-            loading: () => const Center(child: CircularProgressIndicator()),
-            error: (e, _) => Center(child: Text('読み込みエラー: $e')),
+            loading: () => buildFigureContentsArea(
+              context,
+              figure: figure,
+              contentCards: const [
+                Center(child: CircularProgressIndicator()),
+              ],
+            ),
+            error: (e, _) => buildFigureContentsArea(
+              context,
+              figure: figure,
+              contentCards: [Center(child: Text('読み込みエラー: $e'))],
+            ),
             data: (contents) {
               if (contents.isEmpty) {
-                return Center(
-                  child: Text(
-                    'コンテンツがありません',
-                    style: AppTypography.body(color: AppColors.muted),
-                  ),
+                return buildFigureContentsArea(
+                  context,
+                  figure: figure,
+                  contentCards: [
+                    Center(
+                      child: Text(
+                        'コンテンツがありません',
+                        style: AppTypography.body(color: AppColors.muted),
+                      ),
+                    ),
+                  ],
                 );
               }
 
-              final sorted = [...contents]
-                ..sort((a, b) => b.publishedAt.compareTo(a.publishedAt));
+              final sorted = HomeFeed.sortByPublishedAtDesc(contents);
+              final contentCards =
+                  sorted.map(_buildFigureContentCard).toList();
 
-              return ListView.separated(
-                padding: EdgeInsets.fromLTRB(
-                  16,
-                  16,
-                  16,
-                  32 + miniPlayerScrollPadding(context),
-                ),
-                itemCount: sorted.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 24),
-                itemBuilder: (context, index) {
-                  return ContentCard(content: sorted[index]);
-                },
+              return buildFigureContentsArea(
+                context,
+                figure: figure,
+                contentCards: contentCards,
               );
             },
           ),
@@ -77,4 +96,11 @@ class FigureContentsScreen extends ConsumerWidget {
       },
     );
   }
+}
+
+Widget _buildFigureContentCard(Content content) {
+  if (content.type.usesCompactCategoryCard) {
+    return CompactCategoryContentCard(content: content);
+  }
+  return ContentCard(content: content);
 }

@@ -15,13 +15,19 @@ class MockAuthRepository implements AuthRepository {
     final raw = prefs.getString(_userKey);
     if (raw == null) return null;
     final map = jsonDecode(raw) as Map<String, dynamic>;
-    return AppUser(
+    var user = AppUser(
       id: map['id'] as String,
       email: map['email'] as String,
       displayName: map['displayName'] as String,
       tier: UserTier.values.byName(map['tier'] as String),
       avatarAsset: map['avatarAsset'] as String?,
     );
+    if (user.id == DummyAccounts.demoUser.id &&
+        user.tier != DummyAccounts.demoUser.tier) {
+      user = DummyAccounts.demoUser;
+      await _saveUser(user);
+    }
+    return user;
   }
 
   Future<void> _saveUser(AppUser? user) async {

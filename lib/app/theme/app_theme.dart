@@ -19,6 +19,7 @@ abstract final class AppTheme {
         surface: AppColors.surface,
         onPrimary: AppColors.onBase,
         onSurface: AppColors.onBase,
+        surfaceTint: Colors.transparent,
       ),
       textTheme: textTheme,
       primaryTextTheme: textTheme,
@@ -35,6 +36,7 @@ abstract final class AppTheme {
       appBarTheme: AppBarTheme(
         backgroundColor: AppColors.base,
         foregroundColor: AppColors.onBase,
+        surfaceTintColor: Colors.transparent,
         elevation: 0,
         scrolledUnderElevation: 0,
         centerTitle: true,

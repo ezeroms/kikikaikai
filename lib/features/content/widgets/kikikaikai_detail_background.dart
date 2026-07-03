@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 
-/// 奇奇怪怪詳細の固定背景（一覧タブの正方形ヒーローと同じ画像・トーン）
-class KikikaikaiDetailBackground extends StatelessWidget {
-  const KikikaikaiDetailBackground({super.key});
+/// カテゴリ詳細の固定背景（一覧タブの正方形ヒーローと同じ画像・トーン）
+class CategoryDetailBackground extends StatelessWidget {
+  const CategoryDetailBackground({super.key, required this.imageAsset});
 
-  static const imageAsset = 'assets/bg/kikikaikai.png';
+  final String imageAsset;
+
   static const _imageOpacity = 0.72;
 
   @override
@@ -41,6 +42,18 @@ class KikikaikaiDetailBackground extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+/// 奇奇怪怪詳細の固定背景
+class KikikaikaiDetailBackground extends StatelessWidget {
+  const KikikaikaiDetailBackground({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return const CategoryDetailBackground(
+      imageAsset: 'assets/bg/kikikaikai.png',
     );
   }
 }

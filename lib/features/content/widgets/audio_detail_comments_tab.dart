@@ -1,17 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:intl/intl.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
+import 'package:kikikaikai/core/format/format_content_date.dart';
+import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
 import 'package:kikikaikai/features/content/widgets/content_detail_nested_tab_scroll.dart';
 import 'package:kikikaikai/shared/widgets/comment_author_avatar.dart';
+import 'package:kikikaikai/shared/widgets/glass_card.dart';
 import 'package:kikikaikai/shared/widgets/mini_player_bar.dart';
+import 'package:kikikaikai/shared/widgets/timestamp_link_text.dart';
 
 class AudioDetailCommentsTab extends ConsumerStatefulWidget {
-  const AudioDetailCommentsTab({super.key, required this.contentId});
+  const AudioDetailCommentsTab({
+    super.key,
+    required this.content,
+    this.previewLimit,
+  });
 
-  final String contentId;
+  final Content content;
+  final Duration? previewLimit;
 
   @override
   ConsumerState<AudioDetailCommentsTab> createState() =>
@@ -20,19 +28,37 @@ class AudioDetailCommentsTab extends ConsumerStatefulWidget {
 
 class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab> {
   final _controller = TextEditingController();
-  final _dateFormat = DateFormat('yyyy.MM.dd HH:mm');
+
+  static const _sendDisabledOpacity = 0.35;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller.addListener(_onCommentTextChanged);
+  }
 
   @override
   void dispose() {
+    _controller.removeListener(_onCommentTextChanged);
     _controller.dispose();
     super.dispose();
+  }
+
+  void _onCommentTextChanged() {
+    setState(() {});
+  }
+
+  bool get _canSubmit => _controller.text.trim().isNotEmpty;
+
+  void _unfocusCommentInput() {
+    FocusManager.instance.primaryFocus?.unfocus();
   }
 
   Future<void> _submit() async {
     final text = _controller.text;
     if (text.trim().isEmpty) return;
     await ref
-        .read(contentCommentsProvider(widget.contentId).notifier)
+        .read(contentCommentsProvider(widget.content.id).notifier)
         .addComment(text);
     _controller.clear();
     if (!mounted) return;
@@ -41,8 +67,7 @@ class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab>
 
   @override
   Widget build(BuildContext context) {
-    final commentsAsync = ref.watch(contentCommentsProvider(widget.contentId));
-    final currentUser = ref.watch(authProvider).valueOrNull;
+    final commentsAsync = ref.watch(contentCommentsProvider(widget.content.id));
     final detailMiniPlayerPad = ref.watch(detailMiniPlayerVisibleProvider)
         ? MiniPlayerBar.height
         : 0.0;
@@ -52,7 +77,10 @@ class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab>
       child: Column(
       children: [
         Expanded(
-          child: commentsAsync.when(
+          child: GestureDetector(
+            onTap: _unfocusCommentInput,
+            behavior: HitTestBehavior.translucent,
+            child: commentsAsync.when(
             loading: () => Builder(
               builder: (context) => buildContentDetailNestedScrollSlivers(
                 context,
@@ -108,13 +136,8 @@ class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab>
                         separatorBuilder: (_, _) => const SizedBox(height: 12),
                         itemBuilder: (context, index) {
                           final comment = comments[index];
-                          return Container(
-                            padding: const EdgeInsets.all(14),
-                            decoration: BoxDecoration(
-                              color: AppColors.surfaceElevated,
-                              borderRadius: BorderRadius.circular(10),
-                              border: Border.all(color: AppColors.border),
-                            ),
+                          return GlassCard(
+                            padding: GlassCard.kCommentPadding,
                             child: Row(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
@@ -137,7 +160,7 @@ class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab>
                                           ),
                                           const Spacer(),
                                           Text(
-                                            _dateFormat.format(
+                                            formatContentDate(
                                               comment.createdAt,
                                             ),
                                             style: AppTypography.caption(
@@ -147,9 +170,15 @@ class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab>
                                         ],
                                       ),
                                       const SizedBox(height: 8),
-                                      Text(
-                                        comment.body,
+                                      TimestampLinkText(
+                                        text: comment.body,
                                         style: AppTypography.body(size: 14),
+                                        content: widget.content
+                                            .type
+                                            .supportsMediaTimestampLinks
+                                            ? widget.content
+                                            : null,
+                                        previewLimit: widget.previewLimit,
                                       ),
                                     ],
                                   ),
@@ -165,6 +194,7 @@ class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab>
               );
             },
           ),
+          ),
         ),
         SafeArea(
           top: false,
@@ -173,29 +203,31 @@ class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab>
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
-                CommentAuthorAvatar(
-                  avatarAsset: currentUser?.avatarAsset,
-                  radius: 16,
-                ),
-                const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _controller,
                     minLines: 1,
-                    maxLines: 4,
-                    textInputAction: TextInputAction.send,
-                    onSubmitted: (_) => _submit(),
+                    maxLines: 5,
+                    keyboardType: TextInputType.multiline,
+                    textInputAction: TextInputAction.newline,
                     decoration: InputDecoration(
                       hintText: 'コメントを入力',
                       filled: true,
                       fillColor: AppColors.surfaceElevated,
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(4),
                         borderSide: const BorderSide(color: AppColors.border),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
+                        borderRadius: BorderRadius.circular(4),
                         borderSide: const BorderSide(color: AppColors.border),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(4),
+                        borderSide: const BorderSide(
+                          color: AppColors.onBase,
+                          width: 1.5,
+                        ),
                       ),
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -205,8 +237,14 @@ class _AudioDetailCommentsTabState extends ConsumerState<AudioDetailCommentsTab>
                   ),
                 ),
                 const SizedBox(width: 8),
-                IconButton.filled(
-                  onPressed: _submit,
+                IconButton(
+                  onPressed: _canSubmit ? _submit : null,
+                  style: IconButton.styleFrom(
+                    foregroundColor: AppColors.onBase,
+                    disabledForegroundColor: AppColors.onBase.withValues(
+                      alpha: _sendDisabledOpacity,
+                    ),
+                  ),
                   icon: const Icon(Icons.send_rounded),
                 ),
               ],

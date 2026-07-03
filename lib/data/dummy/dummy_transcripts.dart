@@ -5,7 +5,7 @@ import 'package:kikikaikai/data/dummy/dummy_contents.dart';
 /// 音声コンテンツ ID → 書き起こし本文
 final dummyTranscriptsByContentId = {
   for (final content in dummyContents)
-    if (content.type.hasTranscriptTab)
+    if (content.hasTranscriptTab)
       content.id: _transcriptFor(content),
 };
 

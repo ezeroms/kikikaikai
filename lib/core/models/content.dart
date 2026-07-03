@@ -1,4 +1,5 @@
 import 'package:kikikaikai/core/models/access_level.dart';
+import 'package:kikikaikai/core/models/content_media_format.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
 
 class Content {
@@ -18,6 +19,7 @@ class Content {
     this.externalUrl,
     this.cardSubtitle,
     this.transcript,
+    this.mediaFormat,
   });
 
   final String id;
@@ -40,10 +42,28 @@ class Content {
   /// 音声コンテンツの書き起こし
   final String? transcript;
 
+  /// ラジオのメディア形式（音声のみ / 映像付き）。他カテゴリは null。
+  final ContentMediaFormat? mediaFormat;
+
   String get displayThumbnail => thumbnailAsset ?? type.iconAsset;
+
+  /// 詳細画面で街頭テレビと同じレイアウト（映像プレーヤー）を使う
+  bool get usesVideoDetailLayout =>
+      type == ContentType.video ||
+      (type == ContentType.audio &&
+          mediaFormat == ContentMediaFormat.audioWithVideo);
+
+  /// 詳細画面で奇奇怪怪と同じ音声プレーヤーヘッダーを使う
+  bool get usesAudioDetailLayout =>
+      type.isAudioPlayback && !usesVideoDetailLayout;
+
+  /// 詳細画面で「書き起こし」タブを表示する
+  bool get hasTranscriptTab => usesAudioDetailLayout;
 
   /// 音声の総尺（カード表示用。未設定時はサンプル既定値）
   Duration? get playbackDuration =>
       mediaDuration ??
-      (type.isAudioPlayback ? const Duration(minutes: 42) : null);
+      ((type.isAudioPlayback || usesVideoDetailLayout)
+          ? const Duration(minutes: 42)
+          : null);
 }

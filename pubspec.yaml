@@ -45,7 +45,15 @@ flutter:
     - assets/audio/radio_05.mp3
     - assets/audio/radio_06.mp3
     - assets/audio/radio_07.mp3
+    - assets/audio/radio_banner_04.mp3
+    - assets/audio/radio_banner_05.mp3
+    - assets/audio/radio_banner_06.mp3
+    - assets/audio/radio_banner_07.mp3
+    - assets/audio/radio_banner_08.mp3
+    - assets/audio/radio_banner_10.mp3
+    - assets/audio/radio_banner_11.mp3
     - assets/video/
+    - assets/video/radio_banner_09.mp4
     - assets/banner/
     - assets/bg/
     - assets/avatar/

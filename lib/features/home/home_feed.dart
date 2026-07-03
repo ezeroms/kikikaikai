@@ -1,4 +1,3 @@
-import 'package:kikikaikai/core/models/access_level.dart';
 import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
 
@@ -84,14 +83,28 @@ abstract final class HomeFeed {
     ];
   }
 
+  static List<Content> _byIds(List<Content> all, List<String> ids) {
+    final byId = {for (final content in all) content.id: content};
+    return [
+      for (final id in ids)
+        if (byId[id] != null) byId[id]!,
+    ];
+  }
+
+  /// はじめて見る人 — 各カテゴリの入門として回れる固定キュレーション（回覧板は含めない）
+  static const _newcomerContentIds = [
+    'c016', // 奇奇怪怪
+    'c004', // 団地ラジオ
+    'c015', // 団地ラジオ
+    'c006', // 街頭テレビ
+    'c008', // 玉置玉稿
+    'c017', // 奇奇怪怪
+  ];
+
   static List<Content> newcomers(List<Content> all) {
-    return _sorted(
-      all.where(
-        (c) =>
-            _featuredTypes.contains(c.type) &&
-            c.accessLevel == AccessLevel.public,
-      ),
-    ).take(6).toList();
+    return _byIds(all, _newcomerContentIds)
+        .where((content) => content.type != ContentType.bulletin)
+        .toList();
   }
 
   /// 音楽セクション — 団地ラジオと奇奇怪怪

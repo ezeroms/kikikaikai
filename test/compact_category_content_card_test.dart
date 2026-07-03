@@ -27,10 +27,7 @@ void main() {
       ProviderScope(
         child: MaterialApp(
           home: Scaffold(
-            body: Padding(
-              padding: const EdgeInsets.all(24),
-              child: CompactCategoryContentCard(content: content),
-            ),
+            body: CompactCategoryContentCard(content: content),
           ),
         ),
       ),

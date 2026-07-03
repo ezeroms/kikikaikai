@@ -6,7 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kikikaikai/core/media/media_playback.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
 
-/// 音声再生の進捗を SharedPreferences へ同期する
+/// 音声・動画の再生進捗を SharedPreferences へ同期する
 class PlaybackEngagementListener extends ConsumerStatefulWidget {
   const PlaybackEngagementListener({super.key, required this.child});
 
@@ -68,7 +68,7 @@ class _PlaybackEngagementListenerState
   void _onPlaybackState(PlaybackState state) {
     final handler = MediaPlayback.handler;
     final content = handler?.currentContent;
-    if (content == null || !content.type.isAudioPlayback) return;
+    if (content == null || !content.type.tracksPlaybackProgress) return;
 
     final duration = handler?.mediaItem.value?.duration ?? Duration.zero;
     final position = state.updatePosition;

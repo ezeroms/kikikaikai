@@ -9,7 +9,7 @@ abstract final class DummyAccounts {
     id: 'user_ezeroms',
     email: demoEmail,
     displayName: 'ezeroms',
-    tier: UserTier.member,
+    tier: UserTier.resident,
     avatarAsset: 'assets/avatar/ezeroms.png',
   );
 }

@@ -23,7 +23,9 @@ class ContentDetailScreen extends ConsumerWidget {
 
   bool _isPreviewOnly(Content content, UserTier tier) {
     if (_canAccess(content, tier)) return false;
-    return content.type == ContentType.video || content.type.isAudioPlayback;
+    return content.type == ContentType.video ||
+        content.usesVideoDetailLayout ||
+        content.usesAudioDetailLayout;
   }
 
   Future<void> _openExternal(String url) async {
@@ -97,7 +99,7 @@ class ContentDetailScreen extends ConsumerWidget {
                   isDownloaded
                       ? LucideIcons.circle_check
                       : LucideIcons.download,
-                  color: isDownloaded ? AppColors.primary : AppColors.secondary,
+                  color: AppColors.onBase,
                 ),
                 tooltip: isDownloaded ? 'ダウンロード済み' : 'ダウンロード',
               ),

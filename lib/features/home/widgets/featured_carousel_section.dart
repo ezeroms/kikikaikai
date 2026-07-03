@@ -80,11 +80,12 @@ class _FeaturedCarouselSectionState extends State<FeaturedCarouselSection> {
             },
           ),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
         _CarouselPageDots(
           count: _itemCount,
           currentIndex: _currentIndex,
         ),
+        const SizedBox(height: 20),
       ],
     );
   }

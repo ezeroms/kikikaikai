@@ -12,6 +12,7 @@ class AudioPlaybackIndicator extends StatelessWidget {
     required this.progress,
     this.totalDurationMs,
     this.isPlaying = false,
+    this.showDate = true,
   });
 
   static const _progressActive = Color(0xFF1ED760);
@@ -25,6 +26,9 @@ class AudioPlaybackIndicator extends StatelessWidget {
 
   /// このコンテンツが現在再生中か
   final bool isPlaying;
+
+  /// false のときは日付を除き、残り時間または総尺のみ表示する
+  final bool showDate;
 
   @override
   Widget build(BuildContext context) {
@@ -42,23 +46,25 @@ class AudioPlaybackIndicator extends StatelessWidget {
       final left = resolvedTotalMs - progress.positionMs;
       final remaining =
           Duration(milliseconds: left.clamp(0, resolvedTotalMs));
-      statusText = _joinDateAndDuration(
-        dateLabel,
-        formatMediaDurationRemaining(remaining),
-      );
+      final durationText = formatMediaDurationRemaining(remaining);
+      statusText = showDate
+          ? _joinDateAndDuration(dateLabel, durationText)
+          : durationText;
     } else if (resolvedTotalMs != null && resolvedTotalMs > 0) {
-      statusText = _joinDateAndDuration(
-        dateLabel,
-        formatMediaDuration(Duration(milliseconds: resolvedTotalMs)),
-      );
+      final durationText =
+          formatMediaDuration(Duration(milliseconds: resolvedTotalMs));
+      statusText = showDate
+          ? _joinDateAndDuration(dateLabel, durationText)
+          : durationText;
     } else {
-      statusText = dateLabel;
+      statusText = showDate ? dateLabel : '';
     }
 
     return Row(
+      mainAxisSize: MainAxisSize.min,
       children: [
-        Flexible(
-          child: Text(
+        if (statusText.isNotEmpty) ...[
+          Text(
             statusText,
             style: AppTypography.body(
               size: 12,
@@ -67,9 +73,10 @@ class AudioPlaybackIndicator extends StatelessWidget {
             ),
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
+            softWrap: false,
           ),
-        ),
-        const SizedBox(width: 10),
+          const SizedBox(width: 10),
+        ],
         SizedBox(
           width: 72,
           child: ClipRRect(

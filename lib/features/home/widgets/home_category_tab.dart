@@ -23,24 +23,26 @@ class HomeCategoryTab extends ConsumerWidget {
 
   ContentType get contentType => tab.contentType!;
 
-  CategoryProfileHeader get profileHeader => CategoryProfileHeader(
+  CategoryProfileScrollHeader get profileHeader => CategoryProfileScrollHeader(
         title: tab.label,
         description: tab.profileDescription,
-        imageAsset: tab.profileHeroAsset!,
       );
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final contentsAsync = ref.watch(contentsByTypeProvider(contentType));
+    final imageAsset = tab.profileHeroAsset!;
 
     return contentsAsync.when(
       loading: () => buildHomeCategoryTabScroll(
         context,
+        imageAsset: imageAsset,
         header: profileHeader,
         contentCards: const [Center(child: CircularProgressIndicator())],
       ),
       error: (error, _) => buildHomeCategoryTabScroll(
         context,
+        imageAsset: imageAsset,
         header: profileHeader,
         contentCards: [Center(child: Text('読み込みエラー: $error'))],
       ),
@@ -48,6 +50,7 @@ class HomeCategoryTab extends ConsumerWidget {
         if (contents.isEmpty) {
           return buildHomeCategoryTabScroll(
             context,
+            imageAsset: imageAsset,
             header: profileHeader,
             contentCards: [
               Center(
@@ -67,6 +70,7 @@ class HomeCategoryTab extends ConsumerWidget {
 
         return buildHomeCategoryTabScroll(
           context,
+          imageAsset: imageAsset,
           header: profileHeader,
           contentCards: contentCards,
         );

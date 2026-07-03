@@ -20,17 +20,31 @@ enum ContentType {
   bool get isAudioPlayback =>
       this == ContentType.audio || this == ContentType.kikikaikai;
 
+  /// 再生位置を保存・再開する（ラジオ・奇奇怪怪・街頭テレビ）
+  bool get tracksPlaybackProgress =>
+      isAudioPlayback || this == ContentType.video;
+
   bool get isTextArticle =>
       this == ContentType.bulletin || this == ContentType.manuscript;
 
-  /// 詳細画面で「書き起こし」タブを表示する（奇奇怪怪・ラジオ）
-  bool get hasTranscriptTab => isAudioPlayback;
-
-  /// 詳細画面で本編・コメント（＋任意で書き起こし）タブを使う
+  /// 詳細画面で概要・コメント（＋任意で書き起こし）タブを使う
   bool get usesTabbedDetail =>
       isAudioPlayback || this == ContentType.video || isTextArticle;
 
-  bool get usesCompactCategoryCard => isTextArticle || isAudioPlayback;
+  /// 概要・コメント欄でタイムスタンプシークリンクを有効にする
+  bool get supportsMediaTimestampLinks =>
+      isAudioPlayback || this == ContentType.video;
+
+  bool get usesCompactCategoryCard =>
+      isTextArticle || isAudioPlayback || this == ContentType.video;
+
+  /// 詳細画面の固定背景（一覧タブの正方形ヒーロー画像）
+  String? get detailBackgroundAsset => switch (this) {
+        ContentType.kikikaikai => 'assets/bg/kikikaikai.png',
+        ContentType.bulletin => 'assets/bg/kairanban.png',
+        ContentType.manuscript => 'assets/bg/gyokko.png',
+        _ => null,
+      };
 
   String get iconAsset => switch (this) {
         ContentType.bulletin => 'assets/branding/eye_catch/kairanban.png',

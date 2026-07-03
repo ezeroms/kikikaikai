@@ -4,6 +4,7 @@ import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/features/home/home_tab.dart';
 import 'package:kikikaikai/features/home/widgets/home_category_tab.dart';
 import 'package:kikikaikai/features/home/widgets/home_main_tab.dart';
+import 'package:kikikaikai/features/home/widgets/home_category_tab_scroll_scope.dart';
 import 'package:kikikaikai/features/home/widgets/home_logo_header_sliver.dart';
 import 'package:kikikaikai/features/home/widgets/home_pill_tab_bar.dart';
 import 'package:kikikaikai/features/home/widgets/home_tab_bar_sliver.dart';
@@ -18,6 +19,7 @@ class HomeScreen extends ConsumerStatefulWidget {
 
 class _HomeScreenState extends ConsumerState<HomeScreen>
     with SingleTickerProviderStateMixin {
+  final ScrollController _nestedScrollController = ScrollController();
   late final TabController _tabController;
 
   @override
@@ -31,6 +33,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
 
   @override
   void dispose() {
+    _nestedScrollController.dispose();
     _tabController.dispose();
     super.dispose();
   }
@@ -42,14 +45,14 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
       body: SafeArea(
         bottom: false,
         child: NestedScrollView(
-          clipBehavior: Clip.none,
+          controller: _nestedScrollController,
+          clipBehavior: Clip.hardEdge,
           headerSliverBuilder: (context, innerBoxIsScrolled) {
             return [
               SliverOverlapAbsorber(
                 handle: NestedScrollView.sliverOverlapAbsorberHandleFor(context),
-                sliver: SliverPersistentHeader(
-                  pinned: false,
-                  delegate: HomeLogoHeaderSliver(),
+                sliver: const SliverToBoxAdapter(
+                  child: HomeLogoHeader(),
                 ),
               ),
               SliverPersistentHeader(
@@ -60,14 +63,17 @@ class _HomeScreenState extends ConsumerState<HomeScreen>
               ),
             ];
           },
-          body: TabBarView(
-            controller: _tabController,
-            children: [
-              for (final tab in HomeTab.values)
-                tab == HomeTab.home
-                    ? const HomeMainTab()
-                    : HomeCategoryTab(tab: tab),
-            ],
+          body: HomeCategoryTabScrollScope(
+            outerScrollController: _nestedScrollController,
+            child: TabBarView(
+              controller: _tabController,
+              children: [
+                for (final tab in HomeTab.values)
+                  tab == HomeTab.home
+                      ? const HomeMainTab()
+                      : HomeCategoryTab(tab: tab),
+              ],
+            ),
           ),
         ),
       ),

@@ -1,5 +1,6 @@
 import 'package:kikikaikai/core/models/access_level.dart';
 import 'package:kikikaikai/core/models/content.dart';
+import 'package:kikikaikai/core/models/content_media_format.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
 import 'package:kikikaikai/core/models/figure.dart';
 
@@ -30,6 +31,7 @@ abstract final class CatalogMappers {
     required List<String> figureIds,
   }) {
     final mediaDurationMs = row['media_duration_ms'] as int?;
+    final mediaFormatRaw = row['media_format'] as String?;
     return Content(
       id: row['id']! as String,
       type: ContentType.values.byName(row['type']! as String),
@@ -52,6 +54,9 @@ abstract final class CatalogMappers {
       externalUrl: row['external_url'] as String?,
       cardSubtitle: row['card_subtitle'] as String?,
       transcript: row['transcript'] as String?,
+      mediaFormat: mediaFormatRaw == null
+          ? null
+          : ContentMediaFormat.values.byName(mediaFormatRaw),
     );
   }
 
@@ -71,6 +76,7 @@ abstract final class CatalogMappers {
       'external_url': content.externalUrl,
       'card_subtitle': content.cardSubtitle,
       'transcript': content.transcript,
+      'media_format': content.mediaFormat?.name,
     };
   }
 }

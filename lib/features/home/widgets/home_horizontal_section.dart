@@ -90,6 +90,8 @@ class _HomeHorizontalSectionState extends State<HomeHorizontalSection> {
                     width: HomeHorizontalSection.cardWidth,
                     height: HomeHorizontalSection.listHeight,
                     showPlayButton: false,
+                    showDate: false,
+                    glassBackground: false,
                   ),
                 )
               : PageView.builder(
@@ -110,6 +112,8 @@ class _HomeHorizontalSectionState extends State<HomeHorizontalSection> {
                           width: HomeHorizontalSection.cardWidth,
                           height: HomeHorizontalSection.listHeight,
                           showPlayButton: false,
+                          showDate: false,
+                          glassBackground: false,
                         ),
                       ),
                     );

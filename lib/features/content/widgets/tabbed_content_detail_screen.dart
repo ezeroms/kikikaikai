@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_lucide/flutter_lucide.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:kikikaikai/app/theme/app_colors.dart';
+import 'package:kikikaikai/app/theme/app_typography.dart';
 import 'package:kikikaikai/core/debug/playback_debug_log.dart';
 import 'package:kikikaikai/core/models/content.dart';
 import 'package:kikikaikai/core/models/content_type.dart';
@@ -15,6 +16,8 @@ import 'package:kikikaikai/features/content/widgets/content_detail_main_tab.dart
 import 'package:kikikaikai/features/content/widgets/content_detail_nested_tab_scroll.dart';
 import 'package:kikikaikai/features/content/widgets/content_detail_tab_bar_sliver.dart';
 import 'package:kikikaikai/features/content/widgets/kikikaikai_detail_background.dart';
+import 'package:kikikaikai/features/content/widgets/text_article_detail_header.dart';
+import 'package:kikikaikai/features/content/widgets/video_detail_header.dart';
 import 'package:kikikaikai/shared/widgets/access_lock_overlay.dart';
 
 class TabbedContentDetailScreen extends ConsumerStatefulWidget {
@@ -44,15 +47,30 @@ class _TabbedContentDetailScreenState
   late final TabController _tabController;
   final _nestedScrollKey = GlobalKey<NestedScrollViewState>();
   final _playerHeaderKey = GlobalKey();
+  final _textArticleHeaderKey = GlobalKey();
+  final _videoHeaderKey = GlobalKey();
   VoidCallback? _onPlaybackSessionChanged;
   bool _visibilityUpdateScheduled = false;
+  bool _scrollHeaderAppBarTitleVisible = false;
 
-  bool get _hasTranscriptTab => widget.content.type.hasTranscriptTab;
+  bool get _hasTranscriptTab => widget.content.hasTranscriptTab;
 
   bool get _showAudioPlayer =>
-      widget.content.type.isAudioPlayback &&
+      widget.content.usesAudioDetailLayout &&
       widget.content.mediaUrl != null &&
       (widget.canAccess || widget.previewOnly);
+
+  bool get _showVideoPlayer =>
+      widget.content.usesVideoDetailLayout &&
+      widget.content.mediaUrl != null &&
+      (widget.canAccess || widget.previewOnly);
+
+  bool get _showScrollAwayMiniPlayer => _showAudioPlayer || _showVideoPlayer;
+
+  bool get _usesScrollAwayHeaderAppBarTitle =>
+      widget.content.type.isTextArticle ||
+      widget.content.usesVideoDetailLayout ||
+      widget.content.usesAudioDetailLayout;
 
   @override
   void initState() {
@@ -76,6 +94,7 @@ class _TabbedContentDetailScreenState
       _attachScrollListeners();
       _attachPlaybackListeners();
       _updateMiniPlayerVisibility();
+      _updateScrollHeaderAppBarTitle();
     });
   }
 
@@ -103,8 +122,13 @@ class _TabbedContentDetailScreenState
     final nestedScroll = _nestedScrollKey.currentState;
     if (nestedScroll == null) return;
 
-    nestedScroll.outerController.removeListener(_updateMiniPlayerVisibility);
-    nestedScroll.outerController.addListener(_updateMiniPlayerVisibility);
+    nestedScroll.outerController.removeListener(_onOuterScroll);
+    nestedScroll.outerController.addListener(_onOuterScroll);
+  }
+
+  void _onOuterScroll() {
+    _updateMiniPlayerVisibility();
+    _updateScrollHeaderAppBarTitle();
   }
 
   void _writeDetailMiniPlayerVisible(bool visible) {
@@ -131,7 +155,7 @@ class _TabbedContentDetailScreenState
   @override
   void dispose() {
     final nestedScroll = _nestedScrollKey.currentState;
-    nestedScroll?.outerController.removeListener(_updateMiniPlayerVisibility);
+    nestedScroll?.outerController.removeListener(_onOuterScroll);
     final handler = MediaPlayback.handler;
     if (handler != null && _onPlaybackSessionChanged != null) {
       handler.sessionActiveNotifier.removeListener(_onPlaybackSessionChanged!);
@@ -141,7 +165,7 @@ class _TabbedContentDetailScreenState
     super.dispose();
   }
 
-  bool _isPlayerHeaderFullyHidden() {
+  bool _isScrollHeaderFullyHidden() {
     final nestedScroll = _nestedScrollKey.currentState;
     if (nestedScroll != null) {
       final outer = nestedScroll.outerController;
@@ -157,7 +181,7 @@ class _TabbedContentDetailScreenState
       }
     }
 
-    final headerContext = _playerHeaderKey.currentContext;
+    final headerContext = _scrollHeaderKey.currentContext;
     final nestedContext = _nestedScrollKey.currentContext;
     if (headerContext == null || nestedContext == null) return false;
 
@@ -177,6 +201,22 @@ class _TabbedContentDetailScreenState
     return headerBottom <= viewportTop + 0.5;
   }
 
+  GlobalKey get _scrollHeaderKey {
+    if (widget.content.type.isTextArticle) return _textArticleHeaderKey;
+    if (widget.content.usesVideoDetailLayout) return _videoHeaderKey;
+    if (widget.content.usesAudioDetailLayout) return _playerHeaderKey;
+    return _textArticleHeaderKey;
+  }
+
+  void _updateScrollHeaderAppBarTitle() {
+    if (!_usesScrollAwayHeaderAppBarTitle) return;
+
+    final visible = _isScrollHeaderFullyHidden();
+    if (visible == _scrollHeaderAppBarTitleVisible) return;
+
+    setState(() => _scrollHeaderAppBarTitleVisible = visible);
+  }
+
   void _updateMiniPlayerVisibility() {
     if (!mounted || _visibilityUpdateScheduled) return;
 
@@ -189,10 +229,10 @@ class _TabbedContentDetailScreenState
   }
 
   void _applyMiniPlayerVisibility() {
-    if (!_showAudioPlayer) {
+    if (!_showScrollAwayMiniPlayer) {
       PlaybackDebugLog.log(
         'DetailMiniPlayer',
-        'hide content=${widget.content.id} reason=no-audio-player',
+        'hide content=${widget.content.id} reason=no-media-player',
       );
       _writeDetailMiniPlayerVisible(false);
       return;
@@ -203,7 +243,7 @@ class _TabbedContentDetailScreenState
     final hasOuter = outer?.hasClients ?? false;
     final pixels = hasOuter ? outer!.position.pixels : null;
     final maxExtent = hasOuter ? outer!.position.maxScrollExtent : null;
-    final headerHidden = _isPlayerHeaderFullyHidden();
+    final headerHidden = _isScrollHeaderFullyHidden();
     final providerBefore = ref.read(detailMiniPlayerVisibleProvider);
 
     PlaybackDebugLog.log(
@@ -235,37 +275,79 @@ class _TabbedContentDetailScreenState
       unselectedLabelColor: AppColors.muted,
       overlayColor: const WidgetStatePropertyAll(Colors.transparent),
       tabs: [
-        const Tab(text: '本編'),
+        Tab(text: widget.content.type.isTextArticle ? '本文' : '概要'),
         if (_hasTranscriptTab) const Tab(text: '書き起こし'),
         const Tab(text: 'コメント'),
       ],
     );
   }
 
+  Widget _buildAppBarTitle({
+    required bool usesScrollAwayHeaderAppBarTitle,
+  }) {
+    if (usesScrollAwayHeaderAppBarTitle && !_scrollHeaderAppBarTitleVisible) {
+      return const SizedBox.shrink();
+    }
+
+    if (usesScrollAwayHeaderAppBarTitle) {
+      return Text(
+        widget.content.title,
+        maxLines: 1,
+        overflow: TextOverflow.ellipsis,
+        textAlign: TextAlign.center,
+        style: AppTypography.titleSmall(size: 16),
+      );
+    }
+
+    return Text(widget.content.type.label);
+  }
+
   @override
   Widget build(BuildContext context) {
     final showAudioPlayer = _showAudioPlayer;
+    final showVideoPlayer = _showVideoPlayer;
+    final isTextArticle = widget.content.type.isTextArticle;
+    final usesVideoDetailLayout = widget.content.usesVideoDetailLayout;
+    final usesScrollAwayHeaderAppBarTitle = _usesScrollAwayHeaderAppBarTitle;
     final tabBar = _buildTabBar();
-    final isKikikaikai = widget.content.type == ContentType.kikikaikai;
+    final detailBackgroundAsset = widget.content.type.detailBackgroundAsset;
+    final hasDetailBackgroundImage = detailBackgroundAsset != null;
+    final hasSolidBlackDetailBackground =
+        widget.content.type == ContentType.audio;
+    final hasImmersiveDetailBackground =
+        hasDetailBackgroundImage ||
+        widget.content.type == ContentType.audio;
+    final detailScaffoldColor = usesVideoDetailLayout
+        ? Colors.black
+        : (hasImmersiveDetailBackground
+            ? Colors.transparent
+            : AppColors.base);
+    final detailChromeBackgroundColor =
+        hasImmersiveDetailBackground ? Colors.transparent : AppColors.base;
     final tabBarHeight = tabBar.preferredSize.height;
 
     return Stack(
       children: [
-        if (isKikikaikai)
-          const Positioned.fill(
+        if (hasDetailBackgroundImage)
+          Positioned.fill(
             child: IgnorePointer(
-              child: KikikaikaiDetailBackground(),
+              child: CategoryDetailBackground(
+                imageAsset: detailBackgroundAsset,
+              ),
             ),
           ),
+        if (hasSolidBlackDetailBackground)
+          const Positioned.fill(
+            child: ColoredBox(color: Colors.black),
+          ),
         Scaffold(
-          backgroundColor:
-              isKikikaikai ? Colors.transparent : AppColors.base,
+          backgroundColor: detailScaffoldColor,
           appBar: AppBar(
-            title: isKikikaikai
-                ? const SizedBox.shrink()
-                : Text(widget.content.type.label),
-            backgroundColor:
-                isKikikaikai ? Colors.transparent : AppColors.base,
+            centerTitle: usesScrollAwayHeaderAppBarTitle,
+            title: _buildAppBarTitle(
+              usesScrollAwayHeaderAppBarTitle: usesScrollAwayHeaderAppBarTitle,
+            ),
+            backgroundColor: detailChromeBackgroundColor,
             elevation: 0,
             scrolledUnderElevation: 0,
             surfaceTintColor: Colors.transparent,
@@ -280,9 +362,7 @@ class _TabbedContentDetailScreenState
                   widget.isDownloaded
                       ? LucideIcons.circle_check
                       : LucideIcons.download,
-                  color: widget.isDownloaded
-                      ? AppColors.primary
-                      : AppColors.secondary,
+                  color: AppColors.onBase,
                 ),
                 tooltip: widget.isDownloaded ? 'ダウンロード済み' : 'ダウンロード',
               ),
@@ -292,7 +372,7 @@ class _TabbedContentDetailScreenState
             children: [
               NotificationListener<ScrollNotification>(
                 onNotification: (notification) {
-                  _updateMiniPlayerVisibility();
+                  _onOuterScroll();
                   return false;
                 },
                 child: ContentDetailTabScrollScope(
@@ -315,6 +395,27 @@ class _TabbedContentDetailScreenState
                               ),
                             ),
                           ),
+                        if (isTextArticle)
+                          SliverToBoxAdapter(
+                            child: KeyedSubtree(
+                              key: _textArticleHeaderKey,
+                              child: TextArticleDetailHeader(
+                                content: widget.content,
+                              ),
+                            ),
+                          ),
+                        if (usesVideoDetailLayout)
+                          SliverToBoxAdapter(
+                            child: KeyedSubtree(
+                              key: _videoHeaderKey,
+                              child: VideoDetailHeader(
+                                content: widget.content,
+                                canAccess: widget.canAccess,
+                                previewOnly: widget.previewOnly,
+                                showVideoPlayer: showVideoPlayer,
+                              ),
+                            ),
+                          ),
                         SliverOverlapAbsorber(
                           handle:
                               NestedScrollView.sliverOverlapAbsorberHandleFor(
@@ -324,9 +425,7 @@ class _TabbedContentDetailScreenState
                             pinned: true,
                             delegate: ContentDetailTabBarSliver(
                               tabBar: tabBar,
-                              backgroundColor: isKikikaikai
-                                  ? Colors.transparent
-                                  : AppColors.base,
+                              backgroundColor: detailChromeBackgroundColor,
                             ),
                           ),
                         ),
@@ -351,7 +450,10 @@ class _TabbedContentDetailScreenState
                                     content: widget.content,
                                   ),
                                 AudioDetailCommentsTab(
-                                  contentId: widget.content.id,
+                                  content: widget.content,
+                                  previewLimit: widget.previewOnly
+                                      ? widget.content.previewDuration
+                                      : null,
                                 ),
                               ],
                             ),

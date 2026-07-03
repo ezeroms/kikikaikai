@@ -3,7 +3,6 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
-import 'package:kikikaikai/data/dummy/dummy_accounts.dart';
 
 class LoginForm extends ConsumerStatefulWidget {
   const LoginForm({super.key, this.onLoggedIn});
@@ -86,12 +85,6 @@ class _LoginFormState extends ConsumerState<LoginForm> {
                     child: CircularProgressIndicator(strokeWidth: 2),
                   )
                 : const Text('ログイン'),
-          ),
-          const SizedBox(height: 16),
-          Text(
-            '※ ダミーアカウント\n${DummyAccounts.demoEmail} / ${DummyAccounts.demoPassword}',
-            style: AppTypography.label(size: 12),
-            textAlign: TextAlign.center,
           ),
         ],
       ),

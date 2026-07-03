@@ -30,7 +30,7 @@ class FigureMetaRow extends StatelessWidget {
   final String? accessLabel;
   final TextStyle? nameStyle;
 
-  /// コンパクトカード向け — 間隔を詰めた横並び
+  /// コンパクトカード向け — チップ間隔を詰める
   final bool compact;
 
   /// 日付表示（音声カードで再生インジケーター側に出すときは false）
@@ -51,76 +51,130 @@ class FigureMetaRow extends StatelessWidget {
     final chipSpacing = compact ? 12.0 : _figureChipSpacing;
     final resolvedNameStyle = nameStyle ?? metaStyle;
 
-    final figureChips = figures.isEmpty
+    if (compact) {
+      return _CompactFigureMetaRow(
+        figures: figures,
+        dateLabel: dateLabel,
+        dateStyle: dateStyle,
+        avatarRadius: avatarRadius,
+        nameStyle: resolvedNameStyle,
+        accessLabel: accessLabel,
+        showDate: showDate,
+        chipSpacing: chipSpacing,
+      );
+    }
+
+    final children = <Widget>[
+      if (figures.isEmpty)
+        Text(
+          '不明',
+          style: resolvedNameStyle,
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        )
+      else
+        for (final figure in figures)
+          FigureLinkChip(
+            figure: figure,
+            avatarRadius: avatarRadius,
+            nameStyle: resolvedNameStyle,
+          ),
+      if (showDate)
+        Text(
+          dateLabel,
+          style: dateStyle,
+        ),
+      if (accessLabel != null && accessLabel!.isNotEmpty)
+        _AccessLabel(text: accessLabel!),
+    ];
+
+    if (children.isEmpty) return const SizedBox.shrink();
+
+    return Wrap(
+      spacing: chipSpacing,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: children,
+    );
+  }
+}
+
+/// コンパクトカード向け — Figure ブロックと「日付＋ラベル」ブロックで改行する
+class _CompactFigureMetaRow extends StatelessWidget {
+  const _CompactFigureMetaRow({
+    required this.figures,
+    required this.dateLabel,
+    required this.dateStyle,
+    required this.avatarRadius,
+    required this.nameStyle,
+    required this.accessLabel,
+    required this.showDate,
+    required this.chipSpacing,
+  });
+
+  final List<Figure> figures;
+  final String dateLabel;
+  final TextStyle dateStyle;
+  final double avatarRadius;
+  final TextStyle nameStyle;
+  final String? accessLabel;
+  final bool showDate;
+  final double chipSpacing;
+
+  static const _dateLabelSpacing = 8.0;
+  static const _runSpacing = 8.0;
+
+  @override
+  Widget build(BuildContext context) {
+    final figureGroup = figures.isEmpty
         ? Text(
             '不明',
-            style: resolvedNameStyle,
+            style: nameStyle,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
           )
-        : compact
-            ? Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  for (var i = 0; i < figures.length; i++) ...[
-                    if (i > 0) SizedBox(width: chipSpacing),
-                    FigureLinkChip(
-                      figure: figures[i],
-                      avatarRadius: avatarRadius,
-                      nameStyle: resolvedNameStyle,
-                    ),
-                  ],
-                ],
-              )
-            : Wrap(
-                spacing: chipSpacing,
-                runSpacing: 4,
-                crossAxisAlignment: WrapCrossAlignment.center,
-                children: [
-                  for (final figure in figures)
-                    FigureLinkChip(
-                      figure: figure,
-                      avatarRadius: avatarRadius,
-                      nameStyle: resolvedNameStyle,
-                    ),
-                ],
-              );
+        : Wrap(
+            spacing: chipSpacing,
+            runSpacing: _runSpacing,
+            crossAxisAlignment: WrapCrossAlignment.center,
+            children: [
+              for (final figure in figures)
+                FigureLinkChip(
+                  figure: figure,
+                  avatarRadius: avatarRadius,
+                  nameStyle: nameStyle,
+                ),
+            ],
+          );
 
-    if (!showDate && (accessLabel == null || accessLabel!.isEmpty)) {
-      return compact
-          ? SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: figureChips,
-            )
-          : figureChips;
-    }
+    final hasTrailingMeta =
+        showDate || (accessLabel != null && accessLabel!.isNotEmpty);
 
-    return Row(
+    if (!hasTrailingMeta) return figureGroup;
+
+    final trailingMeta = Row(
+      mainAxisSize: MainAxisSize.min,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Flexible(
-          fit: FlexFit.loose,
-          child: Align(
-            alignment: Alignment.centerLeft,
-            child: compact
-                ? SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: figureChips,
-                  )
-                : figureChips,
-          ),
-        ),
-        if (showDate) ...[
-          const SizedBox(width: 8),
+        if (showDate)
           Text(
             dateLabel,
             style: dateStyle,
           ),
-        ],
         if (accessLabel != null && accessLabel!.isNotEmpty) ...[
-          const SizedBox(width: 8),
+          if (showDate) const SizedBox(width: _dateLabelSpacing),
           _AccessLabel(text: accessLabel!),
         ],
+      ],
+    );
+
+    return Wrap(
+      spacing: chipSpacing,
+      runSpacing: _runSpacing,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        figureGroup,
+        trailingMeta,
       ],
     );
   }
@@ -144,7 +198,7 @@ class FigureLinkChip extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () => context.push('/figure/${figure.id}'),
+        onTap: () => context.push('/home/figure/${figure.id}'),
         borderRadius: BorderRadius.circular(6),
         child: Row(
           mainAxisSize: MainAxisSize.min,
@@ -219,10 +273,8 @@ class FigureLinks extends StatelessWidget {
   Widget build(BuildContext context) {
     if (figures.isEmpty) return const SizedBox.shrink();
 
-    final linkNameStyle = AppTypography.label(
-      size: 13,
-      weight: FontWeight.w400,
-      color: AppColors.muted,
+    final linkNameStyle = AppTypography.titleSmall(size: 13).copyWith(
+      fontWeight: FontWeight.w400,
     );
 
     return Wrap(

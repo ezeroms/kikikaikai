@@ -120,15 +120,6 @@ class ProfileScreen extends ConsumerWidget {
                     child: const Text('ログアウト'),
                   ),
                 ],
-                const Spacer(),
-                Text(
-                  '品品団地のマイページ。ここから入居状態を管理できます。',
-                  style: AppTypography.body(
-                    size: 13,
-                    color: AppColors.muted,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
               ],
             ),
           );

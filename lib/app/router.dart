@@ -22,10 +22,23 @@ final _shellNavigatorMypageKey =
 
 GoRoute _contentDetailRoute() {
   return GoRoute(
-    path: 'content/:id',
-    builder: (context, state) => ContentDetailScreen(
-      contentId: state.pathParameters['id']!,
+    path: 'content/:contentId',
+    pageBuilder: (context, state) => MaterialPage(
+      key: state.pageKey,
+      child: ContentDetailScreen(
+        contentId: state.pathParameters['contentId']!,
+      ),
     ),
+  );
+}
+
+GoRoute _figureContentsRoute() {
+  return GoRoute(
+    path: 'figure/:figureId',
+    builder: (context, state) => FigureContentsScreen(
+      figureId: state.pathParameters['figureId']!,
+    ),
+    routes: [_contentDetailRoute()],
   );
 }
 
@@ -39,6 +52,10 @@ final routerProvider = Provider<GoRouter>((ref) {
       final legacyDetail = RegExp(r'^/content/([^/]+)$').firstMatch(state.uri.path);
       if (legacyDetail != null) {
         return '/home/content/${legacyDetail.group(1)}';
+      }
+      final legacyFigure = RegExp(r'^/figure/([^/]+)(.*)$').firstMatch(state.uri.path);
+      if (legacyFigure != null) {
+        return '/home/figure/${legacyFigure.group(1)}${legacyFigure.group(2)}';
       }
       return null;
     },
@@ -62,12 +79,6 @@ final routerProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: '/downloads',
         builder: (context, state) => const DownloadsScreen(),
-      ),
-      GoRoute(
-        path: '/figure/:id',
-        builder: (context, state) => FigureContentsScreen(
-          figureId: state.pathParameters['id']!,
-        ),
       ),
       GoRoute(
         path: '/kairanban',
@@ -114,7 +125,10 @@ final routerProvider = Provider<GoRouter>((ref) {
               GoRoute(
                 path: '/home',
                 builder: (context, state) => MainShellBranch.home(),
-                routes: [_contentDetailRoute()],
+                routes: [
+                  _contentDetailRoute(),
+                  _figureContentsRoute(),
+                ],
               ),
             ],
           ),

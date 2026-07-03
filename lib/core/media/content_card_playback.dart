@@ -18,9 +18,9 @@ abstract final class ContentCardPlayback {
     return content.type == ContentType.video || content.type.isAudioPlayback;
   }
 
-  /// カード上に再生ボタンを出すか（動画は詳細画面から再生）
+  /// カード上に再生ボタンを出すか（動画・映像付きラジオは詳細画面から再生）
   static bool showsCardPlayButton(Content content, UserTier tier) {
-    if (content.type == ContentType.video) return false;
+    if (content.usesVideoDetailLayout) return false;
     return isPlayable(content, tier);
   }
 
@@ -52,7 +52,7 @@ abstract final class ContentCardPlayback {
       rethrow;
     }
 
-    if (!context.mounted || content.type != ContentType.video) return;
+    if (!context.mounted || !content.usesVideoDetailLayout) return;
 
     final controller = MediaPlayback.handler?.videoControllerNotifier.value;
     if (controller == null) return;

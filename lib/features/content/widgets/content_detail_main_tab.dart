@@ -4,13 +4,12 @@ import 'package:kikikaikai/app/theme/app_colors.dart';
 import 'package:kikikaikai/app/theme/app_typography.dart';
 import 'package:kikikaikai/core/format/format_content_date.dart';
 import 'package:kikikaikai/core/models/content.dart';
-import 'package:kikikaikai/core/models/content_type.dart';
-import 'package:kikikaikai/core/models/figure.dart';
+import 'package:kikikaikai/core/media/media_timestamp_seek.dart';
 import 'package:kikikaikai/core/providers/providers.dart';
 import 'package:kikikaikai/features/content/widgets/content_detail_nested_tab_scroll.dart';
-import 'package:kikikaikai/features/content/widgets/tv_player_widget.dart';
 import 'package:kikikaikai/shared/widgets/figure_meta_row.dart';
 import 'package:kikikaikai/shared/widgets/rich_markdown_body.dart';
+import 'package:kikikaikai/shared/widgets/timestamp_link_text.dart';
 
 class ContentDetailMainTab extends ConsumerWidget {
   const ContentDetailMainTab({
@@ -28,22 +27,29 @@ class ContentDetailMainTab extends ConsumerWidget {
         fontWeight: FontWeight.w400,
       );
 
-  bool get _showVideoPlayer =>
-      content.type == ContentType.video &&
-      content.mediaUrl != null &&
-      (canAccess || previewOnly);
+  Duration? _previewLimit() =>
+      previewOnly ? content.previewDuration : null;
+
+  void _seekToTimestamp(Duration position) {
+    MediaTimestampSeek.seek(
+      content,
+      position,
+      previewLimit: _previewLimit(),
+    );
+  }
+
+  ValueChanged<Duration>? get _onSeekTimestamp =>
+      content.type.supportsMediaTimestampLinks ? _seekToTimestamp : null;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final figuresAsync = ref.watch(contentFiguresProvider(content.id));
 
-    if (content.type == ContentType.video) {
+    if (content.usesVideoDetailLayout) {
       return _VideoDetailMainTab(
         content: content,
         canAccess: canAccess,
-        previewOnly: previewOnly,
-        showVideoPlayer: _showVideoPlayer,
-        figureNameStyle: _figureNameStyle,
+        previewLimit: _previewLimit(),
       );
     }
 
@@ -51,15 +57,14 @@ class ContentDetailMainTab extends ConsumerWidget {
       return _TextArticleDetailMainTab(
         content: content,
         canAccess: canAccess,
-        figuresAsync: figuresAsync,
-        figureNameStyle: _figureNameStyle,
       );
     }
 
-    if (content.type == ContentType.kikikaikai) {
+    if (content.usesAudioDetailLayout) {
       return _KikikaikaiDetailMainTab(
         content: content,
         canAccess: canAccess,
+        onSeekTimestamp: _onSeekTimestamp,
       );
     }
 
@@ -121,7 +126,10 @@ class ContentDetailMainTab extends ConsumerWidget {
             ),
             if (content.bodyMarkdown != null && canAccess) ...[
               const SizedBox(height: 24),
-              RichMarkdownBody(data: content.bodyMarkdown!),
+              RichMarkdownBody(
+                data: content.bodyMarkdown!,
+                onSeekTimestamp: _onSeekTimestamp,
+              ),
             ],
           ],
         ),
@@ -132,6 +140,40 @@ class ContentDetailMainTab extends ConsumerWidget {
 
 class _KikikaikaiDetailMainTab extends StatelessWidget {
   const _KikikaikaiDetailMainTab({
+    required this.content,
+    required this.canAccess,
+    this.onSeekTimestamp,
+  });
+
+  final Content content;
+  final bool canAccess;
+  final ValueChanged<Duration>? onSeekTimestamp;
+
+  @override
+  Widget build(BuildContext context) {
+    if (content.bodyMarkdown == null || !canAccess) {
+      return Builder(
+        builder: (context) => buildContentDetailNestedScrollSlivers(
+          context,
+          slivers: const [SliverToBoxAdapter(child: SizedBox.shrink())],
+        ),
+      );
+    }
+
+    return Builder(
+      builder: (context) => buildContentDetailNestedScroll(
+        context,
+        child: RichMarkdownBody(
+          data: content.bodyMarkdown!,
+          onSeekTimestamp: onSeekTimestamp,
+        ),
+      ),
+    );
+  }
+}
+
+class _TextArticleDetailMainTab extends StatelessWidget {
+  const _TextArticleDetailMainTab({
     required this.content,
     required this.canAccess,
   });
@@ -159,144 +201,43 @@ class _KikikaikaiDetailMainTab extends StatelessWidget {
   }
 }
 
-class _TextArticleDetailMainTab extends StatelessWidget {
-  const _TextArticleDetailMainTab({
-    required this.content,
-    required this.canAccess,
-    required this.figuresAsync,
-    required this.figureNameStyle,
-  });
-
-  final Content content;
-  final bool canAccess;
-  final AsyncValue<List<Figure>> figuresAsync;
-  final TextStyle figureNameStyle;
-
-  @override
-  Widget build(BuildContext context) {
-    return Builder(
-      builder: (context) => buildContentDetailNestedScroll(
-        context,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            Text(
-              content.title,
-              style: AppTypography.titleSmall(size: 20),
-            ),
-            const SizedBox(height: 16),
-            figuresAsync.when(
-              loading: () => const SizedBox.shrink(),
-              error: (_, _) => const SizedBox.shrink(),
-              data: (figures) => FigureMetaRow(
-                figures: figures,
-                dateLabel: '',
-                showDate: false,
-                compact: true,
-                avatarRadius: 14,
-                metaFontSize: 14,
-                nameStyle: figureNameStyle,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              formatContentDate(content.publishedAt),
-              style: AppTypography.body(
-                size: 14,
-                color: AppColors.muted,
-                weight: FontWeight.w400,
-              ),
-            ),
-            if (content.bodyMarkdown != null && canAccess) ...[
-              const SizedBox(height: 24),
-              RichMarkdownBody(data: content.bodyMarkdown!),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _VideoDetailMainTab extends ConsumerWidget {
+class _VideoDetailMainTab extends StatelessWidget {
   const _VideoDetailMainTab({
     required this.content,
     required this.canAccess,
-    required this.previewOnly,
-    required this.showVideoPlayer,
-    required this.figureNameStyle,
+    this.previewLimit,
   });
 
   final Content content;
   final bool canAccess;
-  final bool previewOnly;
-  final bool showVideoPlayer;
-  final TextStyle figureNameStyle;
+  final Duration? previewLimit;
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final figuresAsync = ref.watch(contentFiguresProvider(content.id));
+  Widget build(BuildContext context) {
+    if (content.description.trim().isEmpty) {
+      return Builder(
+        builder: (context) => buildContentDetailNestedScrollSlivers(
+          context,
+          slivers: const [SliverToBoxAdapter(child: SizedBox.shrink())],
+        ),
+      );
+    }
+
+    final bodyStyle = AppTypography.body(
+      size: 15,
+      color: AppColors.muted,
+      weight: FontWeight.w400,
+    );
 
     return Builder(
-      builder: (context) => buildContentDetailNestedScrollSlivers(
+      builder: (context) => buildContentDetailNestedScroll(
         context,
-        slivers: [
-          SliverPadding(
-            padding: const EdgeInsets.only(
-              top: kContentDetailTabContentTopSpacing,
-            ),
-            sliver: SliverToBoxAdapter(
-              child: showVideoPlayer
-                  ? TvPlayerWidget(
-                      key: ValueKey(content.id),
-                      content: content,
-                      previewLimit:
-                          previewOnly ? const Duration(seconds: 30) : null,
-                      edgeToEdge: true,
-                    )
-                  : AspectRatio(
-                      aspectRatio: 16 / 9,
-                      child: Image.asset(
-                        content.displayThumbnail,
-                        fit: BoxFit.cover,
-                        width: double.infinity,
-                      ),
-                    ),
-            ),
-          ),
-          SliverPadding(
-            padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
-            sliver: SliverToBoxAdapter(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  Text(
-                    content.title,
-                    style: AppTypography.titleSmall(size: 20),
-                  ),
-                  const SizedBox(height: 16),
-                  figuresAsync.when(
-                    loading: () => const SizedBox.shrink(),
-                    error: (_, _) => const SizedBox.shrink(),
-                    data: (figures) => FigureMetaRow(
-                      figures: figures,
-                      dateLabel: '',
-                      showDate: false,
-                      compact: true,
-                      avatarRadius: 14,
-                      metaFontSize: 14,
-                      nameStyle: figureNameStyle,
-                    ),
-                  ),
-                  if (content.bodyMarkdown != null && canAccess) ...[
-                    const SizedBox(height: 24),
-                    RichMarkdownBody(data: content.bodyMarkdown!),
-                  ],
-                ],
-              ),
-            ),
-          ),
-        ],
+        child: TimestampLinkText(
+          text: content.description,
+          style: bodyStyle,
+          content: content,
+          previewLimit: previewLimit,
+        ),
       ),
     );
   }
